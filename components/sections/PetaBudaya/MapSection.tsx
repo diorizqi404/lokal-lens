@@ -33,7 +33,10 @@ const MapSection = () => {
             onApplyFilter={handleApplyFilter}
             onResetFilter={handleResetFilter}
           />
-          <MapView />
+          <MapView 
+            selectedCategory={selectedCategory}
+            selectedProvince={selectedProvince}
+          />
         </div>
       </div>
     </section>

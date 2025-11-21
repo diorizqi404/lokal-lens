@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 const CulturalShowcaseSection = () => {
   const cultures = [
@@ -33,7 +34,8 @@ const CulturalShowcaseSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-[22px] w-full">
           {cultures.map((culture, index) => (
-            <div
+            <Link
+              href={"/jelajahi/slug"}
               key={index}
               className="w-full h-[350px] sm:h-[381px] rounded-2xl lg:rounded-[24px] relative overflow-hidden hover:scale-105 transition-transform cursor-pointer"
             >
@@ -53,7 +55,7 @@ const CulturalShowcaseSection = () => {
                   {culture.location}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

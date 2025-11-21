@@ -1,18 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const categories = [
-  { id: 'semua', label: 'Semua', active: true, color: '#C1A36F' },
-  { id: 'cerita-budaya', label: 'Cerita Budaya', active: false, color: '#333' },
-  { id: 'tokoh-inspiratif', label: 'Tokoh Inspiratif', active: false, color: '#333' },
-  { id: 'event-nasional', label: 'Event Nasional', active: false, color: '#333' },
-  { id: 'upaya-unesco', label: 'Upaya UNESCO', active: false, color: '#333' },
+  { id: 'semua', label: 'Semua' },
+  { id: 'Cerita Budaya', label: 'Cerita Budaya' },
+  { id: 'Tokoh Inspiratif', label: 'Tokoh Inspiratif' },
+  { id: 'Event Nasional', label: 'Event Nasional' },
+  { id: 'Upaya UNESCO', label: 'Upaya UNESCO' },
 ];
 
-const SearchSection = () => {
-  const [activeCategory, setActiveCategory] = useState('semua');
-  const [searchQuery, setSearchQuery] = useState('');
+interface SearchSectionProps {
+  currentCategory: string;
+  currentSearch: string;
+  onCategoryChange: (category: string) => void;
+  onSearchChange: (search: string) => void;
+}
+
+const SearchSection = ({ currentCategory, currentSearch, onCategoryChange, onSearchChange }: SearchSectionProps) => {
+  const [searchQuery, setSearchQuery] = useState(currentSearch);
+
+  // Sync with URL params
+  useEffect(() => {
+    setSearchQuery(currentSearch);
+  }, [currentSearch]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== currentSearch) {
+        onSearchChange(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, currentSearch, onSearchChange]);
 
   return (
     <section className="w-full mb-8 sm:mb-10 lg:mb-12">
@@ -36,9 +58,9 @@ const SearchSection = () => {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setActiveCategory(category.id)}
+              onClick={() => onCategoryChange(category.id)}
               className={`px-4 py-3 rounded-full font-noto text-sm leading-[21px] transition-all whitespace-nowrap ${
-                activeCategory === category.id
+                currentCategory === category.id
                   ? 'bg-[rgba(193,163,111,0.20)] text-[#C1A36F] font-bold'
                   : 'bg-[rgba(181,181,181,0.30)] text-[#333] font-medium hover:bg-[rgba(181,181,181,0.40)]'
               }`}

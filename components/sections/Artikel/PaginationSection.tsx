@@ -1,16 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const PaginationSection = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10;
+interface PaginationSectionProps {
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}
+
+const PaginationSection = ({ currentPage, onPageChange }: PaginationSectionProps) => {
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Get totalPages from ArticleGridSection via window
+  useEffect(() => {
+    const checkTotalPages = () => {
+      if (typeof window !== 'undefined' && (window as any).__articleTotalPages) {
+        setTotalPages((window as any).__articleTotalPages);
+      }
+    };
+
+    checkTotalPages();
+    const interval = setInterval(checkTotalPages, 100);
+
+    return () => clearInterval(interval);
+  }, [currentPage]);
+
+  // Don't show pagination if only 1 page
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    
+    if (totalPages <= 5) {
+      // Show all pages if 5 or less
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+
+      // Always show last page
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
 
   return (
     <section className="w-full mb-16 sm:mb-20 lg:mb-24">
       <div className="flex justify-center items-center gap-2">
         <button
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           aria-label="Previous page"
@@ -20,56 +78,32 @@ const PaginationSection = () => {
           </svg>
         </button>
 
-        <button
-          onClick={() => setCurrentPage(1)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-noto text-sm font-bold leading-5 transition-colors ${
-            currentPage === 1
-              ? 'bg-[#C1A36F] text-white'
-              : 'bg-white text-[#333] hover:bg-gray-100'
-          }`}
-        >
-          1
-        </button>
+        {getPageNumbers().map((pageNum, index) => {
+          if (pageNum === '...') {
+            return (
+              <span key={`ellipsis-${index}`} className="text-[#6B7280] font-noto text-base px-2">
+                ...
+              </span>
+            );
+          }
+
+          return (
+            <button
+              key={pageNum}
+              onClick={() => onPageChange(pageNum as number)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center font-noto text-sm font-bold leading-5 transition-colors ${
+                currentPage === pageNum
+                  ? 'bg-[#C1A36F] text-white'
+                  : 'bg-white text-[#333] hover:bg-gray-100'
+              }`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
 
         <button
-          onClick={() => setCurrentPage(2)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-noto text-sm font-bold leading-5 transition-colors ${
-            currentPage === 2
-              ? 'bg-[#C1A36F] text-white'
-              : 'bg-white text-[#333] hover:bg-gray-100'
-          }`}
-        >
-          2
-        </button>
-
-        <button
-          onClick={() => setCurrentPage(3)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-noto text-sm font-bold leading-5 transition-colors ${
-            currentPage === 3
-              ? 'bg-[#C1A36F] text-white'
-              : 'bg-white text-[#333] hover:bg-gray-100'
-          }`}
-        >
-          3
-        </button>
-
-        <span className="text-[#6B7280] font-noto text-base px-2">
-          ...
-        </span>
-
-        <button
-          onClick={() => setCurrentPage(10)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-noto text-sm font-bold leading-5 transition-colors ${
-            currentPage === 10
-              ? 'bg-[#C1A36F] text-white'
-              : 'bg-white text-[#333] hover:bg-gray-100'
-          }`}
-        >
-          10
-        </button>
-
-        <button
-          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           aria-label="Next page"

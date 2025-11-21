@@ -1,12 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface AchievementData {
+  user: {
+    id: number;
+    full_name: string;
+    avatar?: string;
+  };
+  badge: {
+    id: number;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    earned_at: string;
+  };
+  profile: {
+    provinces_visited: number;
+    badges_earned: number;
+  };
+  shareableId: string;
+}
 
 export default function BagikanPencapaianPage() {
-  const [message, setMessage] = useState('Bangga menjadi bagian dari pelestarian budaya Indonesia! Saya sudah menjelajahi 13% \nNusantara dan mendapatkan lencana Penjelajah Budaya Jawa. #Lokallens \n#BudayaIndonesia #JelajahNusantara');
-  const [shareUrl] = useState('https://lokallens.id/s/budi/ach123');
+  const [achievementData, setAchievementData] = useState<AchievementData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    fetchAchievementData();
+  }, []);
+
+  const fetchAchievementData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/user/share-achievement', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data pencapaian');
+      }
+
+      const data = await response.json();
+      setAchievementData(data);
+
+      // Calculate percentage
+      const percentage = Math.round((data.profile.provinces_visited / 38) * 100);
+      
+      // Set default message
+      const defaultMessage = `Bangga menjadi bagian dari pelestarian budaya Indonesia! Saya sudah menjelajahi ${percentage}% Nusantara dan mendapatkan lencana ${data.badge.name}. #LokalLens #BudayaIndonesia #JelajahNusantara`;
+      setMessage(defaultMessage);
+
+      // Set share URL
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/profil/bagikan/${data.shareableId}`;
+      setShareUrl(url);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching achievement:', error);
+      setError(error instanceof Error ? error.message : 'Terjadi kesalahan');
+      setLoading(false);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -15,6 +78,8 @@ export default function BagikanPencapaianPage() {
   };
 
   const handleShare = (platform: string) => {
+    if (!achievementData) return;
+    
     const text = encodeURIComponent(message);
     const url = encodeURIComponent(shareUrl);
     
@@ -28,6 +93,45 @@ export default function BagikanPencapaianPage() {
       window.open(shareLinks[platform], '_blank', 'width=600,height=400');
     }
   };
+
+  if (loading) {
+    return (
+      <main className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-green mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat data...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !achievementData) {
+    return (
+      <main className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="text-red-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {error || 'Tidak ada lencana yang ditemukan'}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {error ? 'Silakan coba lagi nanti' : 'Dapatkan lencana pertamamu dengan menjelajahi budaya Nusantara!'}
+          </p>
+          <Link
+            href="/profil"
+            className="inline-block px-6 py-3 bg-primary-green text-white rounded-full font-medium hover:bg-[#0BC943] transition-colors"
+          >
+            Kembali ke Profil
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const percentage = Math.round((achievementData.profile.provinces_visited / 38) * 100);
 
   return (
     <main className="w-full bg-white min-h-screen">
@@ -56,31 +160,41 @@ export default function BagikanPencapaianPage() {
               <div className="relative bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-4 sm:p-6 pb-6">
                 {/* Avatar */}
                 <div className="flex justify-center -mt-12 sm:-mt-14 mb-4">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
-                      <circle cx="16" cy="12" r="5" fill="white"/>
-                      <path d="M6 26C6 21.5817 9.58172 18 14 18H18C22.4183 18 26 21.5817 26 26V26H6V26Z" fill="white"/>
-                    </svg>
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center overflow-hidden">
+                    {achievementData.user.avatar ? (
+                      <Image
+                        src={achievementData.user.avatar}
+                        alt={achievementData.user.full_name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
+                        <circle cx="16" cy="12" r="5" fill="white"/>
+                        <path d="M6 26C6 21.5817 9.58172 18 14 18H18C22.4183 18 26 21.5817 26 26V26H6V26Z" fill="white"/>
+                      </svg>
+                    )}
                   </div>
                 </div>
 
                 {/* User Name */}
                 <div className="text-center mb-2">
                   <p className="text-base font-bold leading-6 text-[#1A1A1A]">
-                    Budi Sanjaya
+                    {achievementData.user.full_name}
                   </p>
                 </div>
 
                 {/* Caption */}
                 <p className="text-sm font-normal leading-5 text-[#6B7280] text-center mb-4">
-                  Baru saja mendapatkan lencana baru di Lokallens!
+                  Baru saja mendapatkan lencana baru di LokalLens!
                 </p>
 
                 {/* Badge Preview */}
-                <div className="relative rounded-3xl overflow-hidden aspect-[574/300] bg-[rgba(0,108,132,0.1)]">
+                <div className="relative rounded-3xl overflow-hidden aspect-574/300 bg-[rgba(0,108,132,0.1)]">
                   {/* Background Pattern */}
                   <div className="absolute inset-0 opacity-10">
-                    <div className="w-full h-full bg-gradient-to-br from-[#006C84] via-[#00A8CC] to-[#006C84]" />
+                    <div className="w-full h-full bg-linear-to-br from-[#006C84] via-[#00A8CC] to-[#006C84]" />
                   </div>
 
                   {/* Content */}
@@ -94,14 +208,14 @@ export default function BagikanPencapaianPage() {
 
                     {/* Badge Name */}
                     <h3 className="text-base sm:text-lg font-bold leading-7 text-[#1A1A1A] mb-2">
-                      Penjelajah Budaya Jawa
+                      {achievementData.badge.name}
                     </h3>
 
                     {/* Badge Description */}
                     <p className="max-w-xs text-xs sm:text-sm font-normal leading-5 text-[#006C84] mb-3 sm:mb-4">
-                      Saya telah menjelajahi 13% kekayaan budaya
+                      Saya telah menjelajahi {percentage}% kekayaan budaya
                       Nusantara! Ayo bergabung dan lestarikan
-                      budaya kita bersama Lokallens!
+                      budaya kita bersama LokalLens!
                     </p>
 
                     {/* Site URL */}

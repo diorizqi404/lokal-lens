@@ -3,7 +3,17 @@
 import { useState } from 'react';
 import ReportCard from './ReportCard';
 
-const mockReports = [
+type Report = {
+  id: number;
+  title: string;
+  image: string;
+  status: 'new' | 'review' | 'verified' | 'rejected';
+  threat: string;
+  location: string;
+  date: string;
+};
+
+const mockReports: Report[] = [
   {
     id: 1,
     title: 'Tari Topeng Cirebon',

@@ -1,118 +1,207 @@
 'use client';
 
-const articles = [
-  {
-    id: 1,
-    category: 'Cerita Budaya',
-    categoryColor: '#4DB6AC',
-    title: 'Filosofi di Balik Setiap Corak Tenun Ikat Sumba',
-    description: 'Setiap helai benang dan motifnya menyimpan cerita leluhur, status sosial, dan harapan bagi pemakainya.',
-    date: '12 Mei 2024',
-    readTime: '7 menit baca',
-    image: 'https://images.unsplash.com/photo-1610701596061-2ecf227e85f7?w=800&q=80',
-  },
-  {
-    id: 2,
-    category: 'Tokoh Inspiratif',
-    categoryColor: '#E57373',
-    title: 'Didik Nini Thowok: Maestro Tari Lintas Gender',
-    description: 'Perjalanan hidup sang maestro yang mendedikasikan hidupnya untuk melestarikan dan merevolusi seni tari tradisional Indonesia.',
-    date: '10 Mei 2024',
-    readTime: '9 menit baca',
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
-  },
-  {
-    id: 3,
-    category: 'Upaya UNESCO',
-    categoryColor: '#C1A36F',
-    title: 'Gamelan dan Pantun: Pengakuan UNESCO untuk Indonesia',
-    description: 'Bagaimana pengakuan dunia internasional melalui UNESCO membantu upaya pelestarian budaya takbenda di tanah air.',
-    date: '8 Mei 2024',
-    readTime: '6 menit baca',
-    image: 'https://images.unsplash.com/photo-1618609378039-b572f64c5b42?w=800&q=80',
-  },
-  {
-    id: 4,
-    category: 'Event Nasional',
-    categoryColor: '#4DB6AC',
-    title: 'Jember Fashion Carnaval: Panggung Budaya Kelas Dunia',
-    description: 'Melihat lebih dekat kemegahan salah satu festival kostum terbesar di dunia yang berakar dari budaya lokal.',
-    date: '5 Mei 2024',
-    readTime: '5 menit baca',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80',
-  },
-  {
-    id: 5,
-    category: 'Cerita Budaya',
-    categoryColor: '#E57373',
-    title: 'Perjalanan Sehelai Kain Batik: Dari Lilin Hingga Warisan',
-    description: 'Menelusuri proses panjang dan penuh kesabaran di balik mahakarya batik tulis yang melegenda.',
-    date: '2 Mei 2024',
-    readTime: '8 menit baca',
-    image: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=800&q=80',
-  },
-  {
-    id: 6,
-    category: 'Tokoh Inspiratif',
-    categoryColor: '#C1A36F',
-    title: 'Ibu Iravati M. Sudiarso: Penjaga Resep Nusantara',
-    description: 'Kisah seorang ahli gastronomi yang mendedikasikan hidupnya untuk mendokumentasikan dan melestarikan kuliner warisan bangsa.',
-    date: '28 April 2024',
-    readTime: '10 menit baca',
-    image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80',
-  },
-];
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
-const ArticleGridSection = () => {
+interface Article {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: string;
+  featured_image: string;
+  read_time: number;
+  published_at: string;
+  author: {
+    id: number;
+    full_name: string;
+  };
+}
+
+interface ArticleGridSectionProps {
+  page: number;
+  category: string;
+  search: string;
+}
+
+const getCategoryColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'Cerita Budaya': '#4DB6AC',
+    'Tokoh Inspiratif': '#E57373',
+    'Event Nasional': '#4DB6AC',
+    'Upaya UNESCO': '#C1A36F',
+  };
+  return colors[category] || '#C1A36F';
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+const ArticleGridSection = ({ page, category, search }: ArticleGridSectionProps) => {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: '9',
+        });
+
+        if (category !== 'semua') {
+          params.set('category', category);
+        }
+
+        if (search) {
+          params.set('search', search);
+        }
+
+        const response = await fetch(`/api/articles?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setArticles(data.articles);
+          setTotalPages(data.pagination.totalPages);
+        }
+      } catch (error) {
+        console.error('Failed to fetch articles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, [page, category, search]);
+
+  // Export totalPages via parent callback
+  useEffect(() => {
+    // Store totalPages in window for PaginationSection to access
+    if (typeof window !== 'undefined') {
+      (window as any).__articleTotalPages = totalPages;
+    }
+  }, [totalPages]);
+
+  if (loading) {
+    return (
+      <section className="w-full mb-12 sm:mb-16 lg:mb-20">
+        <div className="mb-6 sm:mb-8 px-4">
+          <h2 className="text-[#333] font-newsreader text-2xl sm:text-3xl font-bold leading-[37.5px] tracking-[-0.45px]">
+            Jelajahi Semua Cerita
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
+          {[...Array(9)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden animate-pulse">
+              <div className="w-full h-48 bg-gray-200" />
+              <div className="p-5 space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+                <div className="h-6 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="w-full mb-12 sm:mb-16 lg:mb-20">
       <div className="mb-6 sm:mb-8 px-4">
-        <h2 className="text-[#333] font-newsreader text-2xl sm:text-3xl font-bold leading-[37.5px] tracking-[-0.45px]">
+        <motion.h2 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-[#333] font-newsreader text-2xl sm:text-3xl font-bold leading-[37.5px] tracking-[-0.45px]"
+        >
           Jelajahi Semua Cerita
-        </h2>
+        </motion.h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
-        {articles.map((article) => (
-          <article
-            key={article.id}
-            className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)] overflow-hidden flex flex-col hover:shadow-xl transition-shadow cursor-pointer"
-          >
-            <div className="relative w-full h-48 overflow-hidden">
-              <img
-                src={article.image}
-                alt={article.title}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
-            </div>
+      {articles.length === 0 ? (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12 px-4"
+        >
+          <p className="text-[#6B7280] font-noto text-lg">
+            Tidak ada artikel ditemukan.
+          </p>
+        </motion.div>
+      ) : (
+        <motion.div 
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+        >
+          <AnimatePresence mode="wait">
+            {articles.map((article, index) => (
+              <motion.article
+                key={article.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10),0_2px_4px_-2px_rgba(0,0,0,0.10)] overflow-hidden flex flex-col hover:shadow-xl transition-shadow cursor-pointer"
+              >
+                <Link href={`/artikel/${article.slug}`}>
+                  <div className="relative w-full h-48 overflow-hidden">
+                    <motion.img
+                      src={article.featured_image}
+                      alt={article.title}
+                      className="w-full h-full object-cover"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
 
-            <div className="p-5 flex flex-col gap-3">
-              <div>
-                <span
-                  className="font-noto text-sm font-bold leading-5"
-                  style={{ color: article.categoryColor }}
-                >
-                  {article.category}
-                </span>
-              </div>
+                  <div className="p-5 flex flex-col gap-3">
+                    <div>
+                      <span
+                        className="font-noto text-sm font-bold leading-5"
+                        style={{ color: getCategoryColor(article.category) }}
+                      >
+                        {article.category}
+                      </span>
+                    </div>
 
-              <h3 className="text-[#333] font-newsreader text-xl font-bold leading-[27.5px]">
-                {article.title}
-              </h3>
+                    <h3 className="text-[#333] font-newsreader text-xl font-bold leading-[27.5px]">
+                      {article.title}
+                    </h3>
 
-              <p className="text-[#4B5563] font-noto text-sm leading-[22.75px]">
-                {article.description}
-              </p>
+                    <p className="text-[#4B5563] font-noto text-sm leading-[22.75px]">
+                      {article.excerpt}
+                    </p>
 
-              <div className="pt-2 border-t border-[#EAEAEA]">
-                <p className="text-[#6B7280] font-noto text-xs leading-4">
-                  {article.date} • {article.readTime}
-                </p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+                    <div className="pt-2 border-t border-[#EAEAEA]">
+                      <p className="text-[#6B7280] font-noto text-xs leading-4">
+                        {formatDate(article.published_at)} • {article.read_time} menit baca
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.article>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </section>
   );
 };

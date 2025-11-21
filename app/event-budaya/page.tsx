@@ -5,6 +5,7 @@ import EventCard from '@/components/sections/EventBudaya/EventCard';
 import SearchBar from '@/components/sections/EventBudaya/SearchBar';
 import FilterSection from '@/components/sections/EventBudaya/FilterSection';
 import Pagination from '@/components/sections/EventBudaya/Pagination';
+import CalendarView from '@/components/sections/EventBudaya/CalendarView';
 
 export default function EventBudayaPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
@@ -17,8 +18,8 @@ export default function EventBudayaPage() {
       location: 'Jakarta, DKI Jakarta',
       price: 'Rp 250.000',
       image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800&auto=format&fit=crop&q=60',
-      status: 'TERSEDIA',
-      statusColor: 'red',
+      status: 'TERSEDIA' as const,
+      statusColor: 'red' as const,
     },
     {
       id: 2,
@@ -27,8 +28,8 @@ export default function EventBudayaPage() {
       location: 'Denpasar, Bali',
       price: null,
       image: 'https://images.unsplash.com/photo-1555400082-8a2583bf4a1f?w=800&auto=format&fit=crop&q=60',
-      status: 'GRATIS',
-      statusColor: 'green',
+      status: 'GRATIS' as const,
+      statusColor: 'green' as const,
     },
     {
       id: 3,
@@ -37,8 +38,8 @@ export default function EventBudayaPage() {
       location: 'Yogyakarta, DI Yogyakarta',
       price: null,
       image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop&q=60',
-      status: 'HABIS',
-      statusColor: 'gray',
+      status: 'HABIS' as const,
+      statusColor: 'gray' as const,
     },
     {
       id: 4,
@@ -47,8 +48,8 @@ export default function EventBudayaPage() {
       location: 'Surakarta, Jawa Tengah',
       price: 'Rp 50.000',
       image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&auto=format&fit=crop&q=60',
-      status: 'TERSEDIA',
-      statusColor: 'red',
+      status: 'TERSEDIA' as const,
+      statusColor: 'red' as const,
     },
   ];
 
@@ -87,27 +88,33 @@ export default function EventBudayaPage() {
         <FilterSection viewMode={viewMode} setViewMode={setViewMode} />
       </div>
 
-      {/* Events Grid Section */}
+      {/* Events Section - Grid or Calendar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-          {events.map((event, index) => (
-            <div
-              key={event.id}
-              className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-              style={{
-                animationDelay: `${index * 100}ms`,
-                animationFillMode: 'backwards',
-              }}
-            >
-              <EventCard {...event} />
+        {viewMode === 'grid' ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+              {events.map((event, index) => (
+                <div
+                  key={event.id}
+                  className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animationFillMode: 'backwards',
+                  }}
+                >
+                  <EventCard {...event} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Pagination */}
-        <div className="mt-12 sm:mt-16 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
-          <Pagination currentPage={1} totalPages={8} />
-        </div>
+            {/* Pagination */}
+            <div className="mt-12 sm:mt-16 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+              <Pagination currentPage={1} totalPages={8} />
+            </div>
+          </>
+        ) : (
+          <CalendarView events={events} />
+        )}
       </section>
     </div>
   );

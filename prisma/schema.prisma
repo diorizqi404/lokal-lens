@@ -1,0 +1,297 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  password  String
+  full_name String  @map("full_name")
+  role      Role    @default(user)
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  profile      Profile?
+  certificates Certificate[]
+  user_badges  UserBadge[]
+  user_challenges UserCompleteChallenge[]
+  articles     Article[]
+  comments     ArticleComment[]
+  comment_votes UserCommentVote[]
+  bookmarks    UserArticleBookmark[]
+
+  @@map("users")
+}
+
+model Profile {
+  id                Int     @id @default(autoincrement())
+  user_id           Int     @unique @map("user_id")
+  bio               String? @db.Text
+  avatar            String?
+  provinces_visited Int     @default(0) @map("provinces_visited")
+  badges_earned     Int     @default(0) @map("badges_earned")
+  created_at        DateTime @default(now()) @map("created_at")
+  updated_at        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Certificate {
+  id              Int     @id @default(autoincrement())
+  user_id         Int     @map("user_id")
+  title           String
+  description     String? @db.Text
+  date_earned     DateTime @map("date_earned")
+  certificate_url String? @map("certificate_url")
+  created_at      DateTime @default(now()) @map("created_at")
+  updated_at      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+enum Role {
+  user
+  admin
+  contributor
+  officer
+}
+
+model Badge {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @db.Text
+  icon        String   // URL or icon identifier
+  category    BadgeCategory
+  requirement String   @db.Text // Description of how to earn
+  points      Int      @default(0)
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+
+  user_badges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @map("user_id")
+  badge_id   Int      @map("badge_id")
+  earned_at  DateTime @default(now()) @map("earned_at")
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badge_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, badge_id])
+  @@map("user_badges")
+}
+
+model Challenge {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @db.Text
+  category    ChallengeCategory
+  difficulty  ChallengeDifficulty
+  points      Int      @default(0)
+  requirements String  @db.Text // JSON or text description
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+
+  user_challenges UserCompleteChallenge[]
+
+  @@map("challenges")
+}
+
+model UserCompleteChallenge {
+  id           Int      @id @default(autoincrement())
+  user_id      Int      @map("user_id")
+  challenge_id Int      @map("challenge_id")
+  completed_at DateTime @default(now()) @map("completed_at")
+  created_at   DateTime @default(now()) @map("created_at")
+  updated_at   DateTime @updatedAt @map("updated_at")
+
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challenge_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, challenge_id])
+  @@map("user_complete_challenges")
+}
+
+enum BadgeCategory {
+  explorer
+  collector
+  master
+  social
+  special
+}
+
+enum ChallengeCategory {
+  scan
+  quiz
+  article
+  exploration
+  social
+}
+
+enum ChallengeDifficulty {
+  easy
+  medium
+  hard
+}
+
+model Article {
+  id              Int      @id @default(autoincrement())
+  title           String
+  slug            String   @unique
+  excerpt         String   @db.Text
+  content         String   @db.LongText
+  featured_image  String
+  author_id       Int      @map("author_id")
+  category        String
+  tags            String?  @db.Text // JSON array of tags
+  province        String?  // Related province
+  read_time       Int      @default(5) @map("read_time") // in minutes
+  views           Int      @default(0)
+  is_highlight    Boolean  @default(false) @map("is_highlight")
+  published_at    DateTime @default(now()) @map("published_at")
+  created_at      DateTime @default(now()) @map("created_at")
+  updated_at      DateTime @updatedAt @map("updated_at")
+
+  author   User              @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  comments ArticleComment[]
+  bookmarks UserArticleBookmark[]
+
+  @@index([slug])
+  @@index([is_highlight])
+  @@index([published_at])
+  @@map("articles")
+}
+
+model ArticleComment {
+  id         Int      @id @default(autoincrement())
+  article_id Int      @map("article_id")
+  user_id    Int      @map("user_id")
+  parent_id  Int?     @map("parent_id") // For nested replies
+  content    String   @db.Text
+  upvotes    Int      @default(0)
+  downvotes  Int      @default(0)
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  article Article             @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  user    User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  parent  ArticleComment?     @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies ArticleComment[]    @relation("CommentReplies")
+  votes   UserCommentVote[]
+
+  @@index([article_id])
+  @@index([user_id])
+  @@index([parent_id])
+  @@map("article_comments")
+}
+
+model UserCommentVote {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @map("user_id")
+  comment_id Int      @map("comment_id")
+  vote_type  String   @map("vote_type") // 'upvote' or 'downvote'
+  created_at DateTime @default(now()) @map("created_at")
+
+  user    User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  comment ArticleComment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, comment_id])
+  @@index([comment_id])
+  @@map("user_comment_votes")
+}
+
+model UserArticleBookmark {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @map("user_id")
+  article_id Int      @map("article_id")
+  created_at DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [article_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, article_id])
+  @@index([article_id])
+  @@map("user_article_bookmarks")
+}
+
+model Culture {
+  id             Int      @id @default(autoincrement())
+  name           String
+  slug           String   @unique
+  subtitle       String?  // e.g., "Tarian Mistis dari Gerbang Timur Jawa"
+  description    String   @db.Text
+  long_description String? @db.Text
+  meaning        String?  @db.Text // Makna dan Filosofi
+  category       CultureCategory? // Kategori budaya
+  location       String   // e.g., "Ponorogo, Jawa Timur"
+  province       String   // e.g., "Jawa Timur"
+  city           String   // e.g., "Ponorogo"
+  latitude       Float?   // For map and nearby cultures
+  longitude      Float?   // For map and nearby cultures
+  status         CultureStatus @default(active)
+  is_endangered  Boolean  @default(false) // Terancam Punah
+  thumbnail      String?  // Main image URL
+  map_embed_url  String?  @db.Text // Google Maps embed URL
+  created_at     DateTime @default(now()) @map("created_at")
+  updated_at     DateTime @updatedAt @map("updated_at")
+
+  images CultureImage[]
+
+  @@index([province])
+  @@index([city])
+  @@index([category])
+  @@index([latitude, longitude])
+  @@map("cultures")
+}
+
+model CultureImage {
+  id          Int      @id @default(autoincrement())
+  culture_id  Int      @map("culture_id")
+  image_url   String
+  alt_text    String?
+  is_primary  Boolean  @default(false)
+  display_order Int    @default(0) @map("display_order")
+  created_at  DateTime @default(now()) @map("created_at")
+
+  culture Culture @relation(fields: [culture_id], references: [id], onDelete: Cascade)
+
+  @@index([culture_id])
+  @@map("culture_images")
+}
+
+enum CultureStatus {
+  active
+  inactive
+  draft
+}
+
+enum CultureCategory {
+  tarian        // Tarian tradisional
+  musik         // Musik & alat musik tradisional
+  pakaian       // Pakaian adat
+  arsitektur    // Rumah adat & bangunan
+  kuliner       // Makanan & minuman tradisional
+  upacara       // Upacara adat
+  kerajinan     // Kerajinan tangan
+  senjata       // Senjata tradisional
+  permainan     // Permainan tradisional
+  bahasa        // Bahasa & aksara daerah
+}

@@ -1,41 +1,294 @@
 'use client';
 
-const ScannerSection = () => {
-  return (
-    <section className="w-full bg-white py-0">
-      <div className="w-full mx-auto px-4 lg:px-0">
-        <div className="relative w-full mx-auto lg:mx-0">
-          <div className="relative w-full aspect-[584/329] rounded-2xl border border-[#F0F4F4] bg-[#1A2C2C] shadow-sm overflow-hidden">
-            <div className="absolute inset-0 bg-black/20 z-10"></div>
+import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+
+interface ScannerSectionProps {
+  onScanComplete?: (result: any) => void;
+}
+
+export default function ScannerSection({ onScanComplete }: ScannerSectionProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = async () => {
+    try {
+      setIsScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false,
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              videoRef.current?.play();
+              resolve(true);
+            };
+          }
+        });
+        streamRef.current = stream;
+        setIsCameraActive(true);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      setError('Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const handleRetry = () => {
+    setCapturedImage(null);
+    setError(null);
+  };
+
+  const handleCapture = async () => {
+    if (!isCameraActive) {
+      await startCamera();
+    } else {
+      setIsScanning(true);
+      
+      try {
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        
+        if (canvas && video) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            ctx.drawImage(video, 0, 0);
+            const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+            const base64Data = base64Image.split(',')[1];
             
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="relative w-[calc(100%-66px)] h-[calc(100%-66px)] rounded-xl border-2 border-dashed border-white/50">
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-4">
-                  <p className="text-base font-semibold leading-6 text-white text-center">
-                    Posisikan Objek di Dalam Bingkai
-                  </p>
-                  <p className="text-sm font-normal leading-5 text-white/80 text-center">
-                    Pastikan pencahayaan cukup
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+            // Freeze camera by storing captured image
+            setCapturedImage(base64Image);
+            
+            const response = await fetch('/api/scan-culture', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Data }),
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && onScanComplete) {
+              // Add captured image to result
+              const resultWithImage = {
+                ...result,
+                capturedImage: base64Image // Add the captured image to the result
+              };
+              onScanComplete(resultWithImage);
+              stopCamera(); // Stop camera after successful scan
+              // Keep capturedImage displayed
+            } else {
+              // Handle different error types
+              if (response.status === 429) {
+                setError('⚠️ Rate limit tercapai. Gemini API sedang sibuk. Silakan coba lagi dalam 1-2 menit.');
+              } else {
+                setError(result.error || 'Gagal memindai objek');
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Scan error:', err);
+        setError('Terjadi kesalahan saat memindai objek');
+      } finally {
+        setIsScanning(false);
+      }
+    }
+  };
 
-          <div className="flex justify-center mt-5">
-            <button className="flex items-center justify-center gap-3 px-6 sm:px-12 lg:px-[100.5px] py-3.5 rounded-full bg-[#13EC5B] hover:bg-[#10d952] transition-colors shadow-sm">
-              <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7 flex-shrink-0">
-                <path d="M11.4266 11.0833H19.2044C18.7669 9.96528 18.0985 9.00521 17.1992 8.20313C16.2999 7.40105 15.2669 6.83797 14.1002 6.5139L11.4266 11.0833ZM9.1905 13.0278L13.0794 6.31945C12.9011 6.28704 12.7229 6.26274 12.5447 6.24653C12.3664 6.23033 12.1882 6.22223 12.0099 6.22223C10.9405 6.22223 9.94397 6.42477 9.02036 6.82987C8.09675 7.23496 7.27846 7.77778 6.5655 8.45834L9.1905 13.0278ZM4.47522 15.9445H9.77383L5.88494 9.23612C5.36642 9.90047 4.96133 10.6337 4.66966 11.4358C4.378 12.2379 4.23216 13.0926 4.23216 14C4.23216 14.3403 4.25242 14.6684 4.29293 14.9844C4.33344 15.3004 4.3942 15.6204 4.47522 15.9445ZM9.91966 21.4861L12.5447 16.9167H4.8155C5.253 18.0347 5.9214 18.9948 6.82071 19.7969C7.72001 20.599 8.753 21.162 9.91966 21.4861ZM12.0099 21.7778C13.0794 21.7778 14.0759 21.5752 14.9995 21.1701C15.9231 20.7651 16.7414 20.2222 17.4544 19.5417L14.8294 14.9722L10.9405 21.6806C11.1187 21.713 11.2929 21.7373 11.4631 21.7535C11.6332 21.7697 11.8155 21.7778 12.0099 21.7778ZM18.1349 18.7639C18.6535 18.0995 19.0586 17.3663 19.3502 16.5642C19.6419 15.7622 19.7877 14.9074 19.7877 14C19.7877 13.6597 19.7675 13.3316 19.727 13.0156C19.6864 12.6997 19.6257 12.3796 19.5447 12.0556H14.2461L18.1349 18.7639ZM12.0099 23.7222C10.6812 23.7222 9.42545 23.467 8.24258 22.9566C7.05971 22.4462 6.02672 21.7494 5.14362 20.8663C4.26052 19.9832 3.56376 18.9502 3.05334 17.7674C2.54293 16.5845 2.28772 15.3287 2.28772 14C2.28772 12.6551 2.54293 11.3953 3.05334 10.2205C3.56376 9.04572 4.26052 8.01679 5.14362 7.13369C6.02672 6.25059 7.05971 5.55383 8.24258 5.04341C9.42545 4.53299 10.6812 4.27778 12.0099 4.27778C13.3548 4.27778 14.6147 4.53299 15.7895 5.04341C16.9642 5.55383 17.9932 6.25059 18.8763 7.13369C19.7594 8.01679 20.4561 9.04572 20.9665 10.2205C21.477 11.3953 21.7322 12.6551 21.7322 14C21.7322 15.3287 21.477 16.5845 20.9665 17.7674C20.4561 18.9502 19.7594 19.9832 18.8763 20.8663C17.9932 21.7494 16.9642 22.4462 15.7895 22.9566C14.6147 23.467 13.3548 23.7222 12.0099 23.7222Z" fill="#111818"/>
-              </svg>
-              <span className="text-base sm:text-lg font-bold leading-7 tracking-[0.45px] text-[#111818]">
-                Pindai Sekarang
-              </span>
-            </button>
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  return (
+    <>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.5 }}
+      className="relative w-full aspect-square rounded-2xl overflow-hidden border border-[#F0F4F4] shadow-sm"
+      style={{
+        background: isCameraActive || capturedImage ? '#000' : 'linear-gradient(135deg, #1A2C2C 0%, #0F1A1A 100%)',
+      }}
+    >
+      {/* Camera Video */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ display: isCameraActive && !capturedImage ? 'block' : 'none' }}
+      />
+      
+      {/* Captured/Frozen Image */}
+      {capturedImage && (
+        <img
+          src={capturedImage}
+          alt="Captured"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      
+      {/* Hidden canvas for capturing */}
+      <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Error Message */}
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-4 left-4 right-4 bg-red-500/95 backdrop-blur-sm text-white px-4 py-3 rounded-xl text-sm z-50 flex justify-between items-start shadow-lg"
+        >
+          <div className="flex-1 pr-2">
+            <p className="font-semibold">{error}</p>
+            {error.includes('Rate limit') && (
+              <p className="text-xs mt-1 text-white/90">
+                Tip: Gunakan API key berbeda atau tunggu beberapa menit.
+              </p>
+            )}
           </div>
+          <button 
+            onClick={() => setError(null)} 
+            className="ml-2 font-bold text-xl hover:text-red-100 transition-colors flex-shrink-0"
+          >
+            ×
+          </button>
+        </motion.div>
+      )}
+      
+      {/* Dark overlay */}
+      {!capturedImage && (
+        <div className={`absolute inset-0 z-10 ${isCameraActive ? 'bg-black/10' : 'bg-black/20'}`} />
+      )}
+      
+      {/* Animated dashed border */}
+      {!capturedImage && (
+        <motion.div
+          animate={{
+            opacity: isScanning ? [0.5, 1, 0.5] : [0.5, 1, 0.5],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute inset-0 z-20 flex items-center justify-center p-8 sm:p-12"
+        >
+          <div className="w-full h-full max-w-[582px] max-h-[510px] rounded-xl border-2 border-dashed border-white/50" />
+        </motion.div>
+      )}
+
+      {/* Content */}
+      {!capturedImage && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center px-4 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="text-center space-y-2"
+          >
+            <h3 className="text-base sm:text-lg font-semibold text-white drop-shadow-lg">
+              {isScanning && !isCameraActive ? 'Memuat Kamera...' : isScanning ? 'Sedang Memindai...' : isCameraActive ? 'Posisikan Objek di Dalam Bingkai' : 'Siap untuk Memindai'}
+            </h3>
+            <p className="text-sm text-white/80 drop-shadow-lg">
+              {isScanning && !isCameraActive ? 'Mohon tunggu sebentar...' : isCameraActive ? 'Pastikan pencahayaan cukup' : 'Klik tombol untuk memulai'}
+            </p>
+          </motion.div>
+
         </div>
-      </div>
-    </section>
+      )}
+    </motion.div>
+        {/* Scan Button */}
+        <div className="mt-1 w-full flex justify-center gap-3 pointer-events-auto mx-auto">
+          <motion.button
+            onClick={capturedImage ? handleRetry : handleCapture}
+            disabled={isScanning}
+            whileHover={{ scale: isScanning ? 1 : 1.05 }}
+            whileTap={{ scale: isScanning ? 1 : 0.95 }}
+            onHoverStart={() => setIsHovered(true)}
+            onHoverEnd={() => setIsHovered(false)}
+            className="flex items-center justify-center gap-3 px-8 sm:px-12 py-2 sm:py-3 bg-[#0FD94F] hover:bg-[#0BC943] rounded-full shadow-2xl relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isScanning && !isCameraActive ? (
+              <motion.div
+                className="w-6 h-6 border-3 border-black border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+            ) : (
+              <>
+                <motion.div
+                  animate={{
+                    x: isHovered ? 0 : '-100%',
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/50 to-white/10"
+                />
+                
+                {capturedImage ? (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : (
+                  <svg width="30" height="36" viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14.25 14.25H24.25C23.6875 12.8125 22.8281 11.5781 21.6719 10.5469C20.5156 9.51562 19.1875 8.79167 17.6875 8.375L14.25 14.25ZM11.375 16.75L16.375 8.125C16.1458 8.08333 15.9167 8.05208 15.6875 8.03125C15.4583 8.01042 15.2292 8 15 8C13.625 8 12.3438 8.26042 11.1562 8.78125C9.96875 9.30208 8.91667 10 8 10.875L11.375 16.75ZM5.3125 20.5H12.125L7.125 11.875C6.45833 12.7292 5.9375 13.6719 5.5625 14.7031C5.1875 15.7344 5 16.8333 5 18C5 18.4375 5.02604 18.8594 5.07812 19.2656C5.13021 19.6719 5.20833 20.0833 5.3125 20.5ZM12.3125 27.625L15.6875 21.75H5.75C6.3125 23.1875 7.17188 24.4219 8.32812 25.4531C9.48438 26.4844 10.8125 27.2083 12.3125 27.625ZM15 28C16.375 28 17.6562 27.7396 18.8438 27.2188C20.0312 26.6979 21.0833 26 22 25.125L18.625 19.25L13.625 27.875C13.8542 27.9167 14.0781 27.9479 14.2969 27.9688C14.5156 27.9896 14.75 28 15 28ZM22.875 24.125C23.5417 23.2708 24.0625 22.3281 24.4375 21.2969C24.8125 20.2656 25 19.1667 25 18C25 17.5625 24.974 17.1406 24.9219 16.7344C24.8698 16.3281 24.7917 15.9167 24.6875 15.5H17.875L22.875 24.125ZM15 30.5C13.2917 30.5 11.6771 30.1719 10.1562 29.5156C8.63542 28.8594 7.30729 27.9635 6.17188 26.8281C5.03646 25.6927 4.14062 24.3646 3.48438 22.8438C2.82812 21.3229 2.5 19.7083 2.5 18C2.5 16.2708 2.82812 14.651 3.48438 13.1406C4.14062 11.6302 5.03646 10.3073 6.17188 9.17188C7.30729 8.03646 8.63542 7.14062 10.1562 6.48438C11.6771 5.82812 13.2917 5.5 15 5.5C16.7292 5.5 18.349 5.82812 19.8594 6.48438C21.3698 7.14062 22.6927 8.03646 23.8281 9.17188C24.9635 10.3073 25.8594 11.6302 26.5156 13.1406C27.1719 14.651 27.5 16.2708 27.5 18C27.5 19.7083 27.1719 21.3229 26.5156 22.8438C25.8594 24.3646 24.9635 25.6927 23.8281 26.8281C22.6927 27.9635 21.3698 28.8594 19.8594 29.5156C18.349 30.1719 16.7292 30.5 15 30.5Z" fill="black"/>
+                  </svg>
+                )}
+                
+                <span className="text-lg font-bold text-black tracking-[0.5px] relative z-10">
+                  {capturedImage ? 'Pindai Lagi' : isCameraActive ? 'Pindai Sekarang' : 'Aktifkan Kamera'}
+                </span>
+              </>
+            )}
+          </motion.button>
+          
+          {isCameraActive && !isScanning && (
+            <motion.button
+              onClick={stopCamera}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="px-6 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full shadow-2xl z-50"
+            >
+              Matikan
+            </motion.button>
+          )}
+        </div>
+        </>
   );
-};
+}
 
-export default ScannerSection;

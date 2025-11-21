@@ -12,6 +12,10 @@
     color: #111813;
     font-family: var(--font-plus-jakarta-sans), -apple-system, Roboto, Helvetica, sans-serif;
   }
+
+  button {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {

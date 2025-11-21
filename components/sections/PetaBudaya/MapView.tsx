@@ -1,26 +1,185 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CulturalItemCard from './CulturalItemCard';
+import dynamic from 'next/dynamic';
 
-const MapView = () => {
-  const [showCard, setShowCard] = useState(true);
+// Dynamic import untuk Leaflet (hanya di client-side)
+const LeafletMapComponent = dynamic(
+  () => import('./GoogleMapComponent'),
+  { ssr: false }
+);
 
-  const regions = ['Jawa', 'Sumatra', 'Kalimantan', 'Papua'];
+interface Culture {
+  id: string;
+  name: string;
+  slug: string;
+  subtitle: string | null;
+  description: string | null;
+  category: string | null;
+  location: string | null;
+  province: string | null;
+  city: string | null;
+  lat: number;
+  long: number;
+  thumbnail: string | null;
+  image: string | null;
+  distance: number;
+  is_endangered: boolean;
+}
+
+interface MapViewProps {
+  selectedCategory?: string;
+  selectedProvince?: string;
+}
+
+const categoryColors: Record<string, string> = {
+  tarian: '#FD7E14',
+  musik: '#4A90E2',
+  pakaian: '#E91E63',
+  arsitektur: '#9C27B0',
+  kuliner: '#FF5722',
+  upacara: '#D0021B',
+  kerajinan: '#9013FE',
+  senjata: '#795548',
+  permainan: '#00BCD4',
+  bahasa: '#4CAF50',
+};
+
+const MapView = ({ selectedCategory, selectedProvince }: MapViewProps) => {
+  const [selectedCulture, setSelectedCulture] = useState<Culture | null>(null);
+  const [cultures, setCultures] = useState<Culture[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationPermission, setLocationPermission] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+
+  // Ambil lokasi user dengan permission request
+  useEffect(() => {
+    const requestLocation = () => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+            setLocationPermission('granted');
+            setError(null);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            setLocationPermission('denied');
+            
+            // Default ke Jakarta jika gagal
+            setUserLocation({ lat: -6.2088, lng: 106.8456 });
+            
+            if (error.code === error.PERMISSION_DENIED) {
+              setError('Izin lokasi ditolak. Menampilkan budaya di Jakarta. Aktifkan lokasi untuk hasil lebih akurat.');
+            } else {
+              setError('Tidak dapat mengakses lokasi. Menampilkan budaya di Jakarta.');
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      } else {
+        // Default ke Jakarta jika geolocation tidak tersedia
+        setUserLocation({ lat: -6.2088, lng: 106.8456 });
+        setError('Geolocation tidak didukung pada browser ini. Menampilkan budaya di Jakarta.');
+      }
+    };
+
+    requestLocation();
+  }, []);
+
+  // Fetch cultures berdasarkan lokasi user
+  useEffect(() => {
+    if (!userLocation) return;
+
+    const fetchCultures = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          lat: userLocation.lat.toString(),
+          lng: userLocation.lng.toString(),
+          radius: '1000', // 1000km radius
+        });
+
+        if (selectedCategory && selectedCategory !== 'Semua Kategori') {
+          params.append('category', selectedCategory.toLowerCase());
+        }
+
+        const response = await fetch(`/api/cultures/nearby?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
+          let filteredCultures = data.data;
+
+          // Filter by province jika dipilih
+          if (selectedProvince && selectedProvince !== 'Seluruh Indonesia') {
+            filteredCultures = filteredCultures.filter(
+              (c: Culture) => c.province === selectedProvince
+            );
+          }
+
+          setCultures(filteredCultures);
+          // Pilih culture terdekat sebagai default
+          if (filteredCultures.length > 0) {
+            setSelectedCulture(filteredCultures[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching cultures:', error);
+        setError('Gagal memuat data budaya');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCultures();
+  }, [userLocation, selectedCategory, selectedProvince]);
+
+  // Filter cultures berdasarkan search query
+  const filteredCultures = cultures.filter((culture) =>
+    culture.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    culture.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    culture.province?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleMarkerClick = (culture: Culture) => {
+    setSelectedCulture(culture);
+  };
 
   return (
     <div className="flex-1 relative">
-      <div className="rounded-[32px] overflow-hidden bg-gray-200 h-[400px] sm:h-[500px] lg:h-[503px] relative">
-        <div 
-          className="w-full h-full bg-cover bg-center"
-          style={{
-            backgroundImage: "url('https://api.builder.io/api/v1/image/assets/TEMP/2a2a80ce40bdae1fb51e593efc72357ab3889117?width=1730')",
-            backgroundSize: '268.75px 268.75px',
-            backgroundRepeat: 'repeat',
-          }}
-        >
-          <div className="absolute top-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-[320px] lg:max-w-[380px]">
-            <div className="flex items-center rounded-full bg-white/0 shadow-lg backdrop-blur-sm overflow-hidden">
+      <div className="rounded-[32px] overflow-hidden bg-gray-200 h-[400px] sm:h-[500px] lg:h-[600px] relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00A99D] mx-auto mb-4"></div>
+              <p className="text-sm text-[#618989]">Memuat peta budaya...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Leaflet Map Component */}
+        {!loading && userLocation && (
+          <LeafletMapComponent
+            userLocation={userLocation}
+            cultures={filteredCultures}
+            onMarkerClick={handleMarkerClick}
+            selectedCulture={selectedCulture}
+          />
+        )}
+
+          {/* Search Bar Overlay */}
+          <div className="absolute top-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-[320px] lg:max-w-[380px] z-20">
+            <div className="flex items-center rounded-full bg-white shadow-lg overflow-hidden">
               <div className="flex items-center justify-center pl-4 pr-0 py-3 sm:py-3.5 bg-white rounded-l-full">
                 <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-6 sm:w-6 sm:h-7">
                   <path d="M19.3987 22.75L13.2737 16.625C12.7875 17.0139 12.2285 17.3218 11.5966 17.5486C10.9646 17.7755 10.2922 17.8889 9.57921 17.8889C7.81301 17.8889 6.31821 17.2772 5.09484 16.0538C3.87146 14.8304 3.25977 13.3356 3.25977 11.5694C3.25977 9.80324 3.87146 8.30845 5.09484 7.08507C6.31821 5.86169 7.81301 5.25 9.57921 5.25C11.3454 5.25 12.8402 5.86169 14.0636 7.08507C15.287 8.30845 15.8987 9.80324 15.8987 11.5694C15.8987 12.2824 15.7852 12.9549 15.5584 13.5868C15.3315 14.2188 15.0237 14.7778 14.6348 15.2639L20.7598 21.3889L19.3987 22.75ZM9.57921 15.9444C10.7945 15.9444 11.8275 15.5191 12.6782 14.6684C13.5289 13.8177 13.9542 12.7847 13.9542 11.5694C13.9542 10.3542 13.5289 9.32118 12.6782 8.47049C11.8275 7.61979 10.7945 7.19444 9.57921 7.19444C8.36393 7.19444 7.33095 7.61979 6.48025 8.47049C5.62956 9.32118 5.20421 10.3542 5.20421 11.5694C5.20421 12.7847 5.62956 13.8177 6.48025 14.6684C7.33095 15.5191 8.36393 15.9444 9.57921 15.9444Z" fill="#618989"/>
@@ -29,13 +188,16 @@ const MapView = () => {
               <input
                 type="text"
                 placeholder="Cari budaya atau lokasi"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 px-2 sm:px-3 py-3 sm:py-3.5 bg-white text-sm sm:text-base font-normal text-[#618989] placeholder:text-[#618989] outline-none border-none"
               />
               <div className="w-2 bg-white rounded-r-full"></div>
             </div>
           </div>
 
-          <div className="absolute hidden sm:block top-4 right-4 lg:right-6 rounded-[32px] bg-white/80 backdrop-blur-sm shadow-lg p-4 w-48">
+          {/* Legend Overlay */}
+          <div className="absolute hidden sm:block top-4 right-4 lg:right-6 rounded-[32px] bg-white/90 backdrop-blur-sm shadow-lg p-4 w-48 z-20">
             <h3 className="text-base font-bold leading-6 text-[#333333] mb-3">
               Legenda
             </h3>
@@ -54,59 +216,73 @@ const MapView = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#D0021B]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Upacara Adat</span>
+                <span className="text-sm font-normal leading-5 text-[#333333]">Upacara</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
+                <span className="text-sm font-normal leading-5 text-[#333333]">Pakaian</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#FF5722]"></div>
+                <span className="text-sm font-normal leading-5 text-[#333333]">Kuliner</span>
               </div>
             </div>
           </div>
 
-          <div className="absolute right-4 sm:right-6 top-[45%] sm:top-[360px] lg:top-[359px] flex flex-col gap-2">
-            <div className="flex flex-col">
-              <button className="w-10 h-10 flex items-center justify-center rounded-t-[32px] bg-white shadow-md hover:bg-gray-50 transition-colors">
-                <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
-                  <path d="M11.0374 14.9722H5.2041V13.0278H11.0374V7.19443H12.9819V13.0278H18.8152V14.9722H12.9819V20.8055H11.0374V14.9722Z" fill="#333333"/>
-                </svg>
-              </button>
-              <button className="w-10 h-10 flex items-center justify-center rounded-b-[32px] bg-white shadow-md hover:bg-gray-50 transition-colors">
-                <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
-                  <path d="M5.2041 14.9722V13.0278H18.8152V14.9722H5.2041Z" fill="#333333"/>
-                </svg>
-              </button>
-            </div>
-            <button className="w-10 h-10 flex items-center justify-center rounded-[32px] bg-white shadow-md hover:bg-gray-50 transition-colors">
-              <svg width="25" height="28" viewBox="0 0 25 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
-                <path d="M11.0379 24.6458V22.7014C9.01241 22.4745 7.27456 21.636 5.82433 20.1857C4.3741 18.7355 3.53555 16.9977 3.3087 14.9722H1.36426V13.0278H3.3087C3.53555 11.0023 4.3741 9.26445 5.82433 7.81421C7.27456 6.36398 9.01241 5.52544 11.0379 5.29859V3.35415H12.9823V5.29859C15.0078 5.52544 16.7456 6.36398 18.1959 7.81421C19.6461 9.26445 20.4846 11.0023 20.7115 13.0278H22.6559V14.9722H20.7115C20.4846 16.9977 19.6461 18.7355 18.1959 20.1857C16.7456 21.636 15.0078 22.4745 12.9823 22.7014V24.6458H11.0379ZM12.0101 20.8055C13.8897 20.8055 15.4939 20.1412 16.8226 18.8125C18.1513 17.4838 18.8156 15.8796 18.8156 14C18.8156 12.1203 18.1513 10.5162 16.8226 9.18748C15.4939 7.85877 13.8897 7.19442 12.0101 7.19442C10.1305 7.19442 8.5263 7.85877 7.19759 9.18748C5.86889 10.5162 5.20454 12.1203 5.20454 14C5.20454 15.8796 5.86889 17.4838 7.19759 18.8125C8.5263 20.1412 10.1305 20.8055 12.0101 20.8055ZM12.0101 17.8889C10.9406 17.8889 10.0251 17.5081 9.26356 16.7465C8.50199 15.9849 8.1212 15.0694 8.1212 14C8.1212 12.9305 8.50199 12.015 9.26356 11.2535C10.0251 10.4919 10.9406 10.1111 12.0101 10.1111C13.0795 10.1111 13.995 10.4919 14.7566 11.2535C15.5182 12.015 15.899 12.9305 15.899 14C15.899 15.0694 15.5182 15.9849 14.7566 16.7465C13.995 17.5081 13.0795 17.8889 12.0101 17.8889ZM12.0101 15.9444C12.5448 15.9444 13.0026 15.754 13.3834 15.3732C13.7641 14.9925 13.9545 14.5347 13.9545 14C13.9545 13.4653 13.7641 13.0075 13.3834 12.6267C13.0026 12.2459 12.5448 12.0555 12.0101 12.0555C11.4754 12.0555 11.0176 12.2459 10.6368 12.6267C10.256 13.0075 10.0656 13.4653 10.0656 14C10.0656 14.5347 10.256 14.9925 10.6368 15.3732C11.0176 15.754 11.4754 15.9444 12.0101 15.9444Z" fill="#333333"/>
-              </svg>
-            </button>
-          </div>
-
-          <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-            {regions.map((region) => (
-              <button
-                key={region}
-                className="px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors"
-              >
-                <span className="text-sm font-semibold leading-5 text-[#333333]">
-                  {region}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="absolute top-[35%] sm:top-[40%] left-[18%] sm:left-[260px] w-6 h-6 rounded-full border-2 border-white bg-[#4A90E2] shadow-lg"></div>
-          <div className="absolute top-[45%] sm:top-[50%] left-[38%] sm:left-[346px] w-6 h-6 rounded-full border-2 border-white bg-[#9013FE] shadow-lg"></div>
-          <div className="absolute top-[50%] sm:top-[55%] left-[60%] sm:left-[519px] w-6 h-6 rounded-full border-2 border-white bg-[#FD7E14] shadow-lg"></div>
-
-          {showCard && (
-            <div className="hidden sm:block absolute bottom-4 left-4">
-              <CulturalItemCard onClose={() => setShowCard(false)} />
+          {/* Culture Card Overlay */}
+          {selectedCulture && (
+            <div className="hidden sm:block absolute bottom-4 left-4 z-30">
+              <CulturalItemCard
+                onClose={() => setSelectedCulture(null)}
+                culture={selectedCulture}
+              />
             </div>
           )}
-        </div>
+
+          {/* Location Permission Message */}
+          {locationPermission === 'denied' && (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 px-4 py-3 rounded-lg text-xs sm:text-sm shadow-md max-w-xs sm:max-w-md text-center z-20">
+              <p className="font-semibold mb-1">📍 Izin Lokasi Ditolak</p>
+              <p className="text-xs">Aktifkan izin lokasi di pengaturan browser untuk hasil yang lebih akurat.</p>
+            </div>
+          )}
+
+          {/* Info Message */}
+          {error && locationPermission !== 'denied' && (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-xs sm:text-sm shadow-md max-w-xs text-center z-20">
+              {error}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && filteredCultures.length === 0 && (
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-sm rounded-2xl p-6 text-center shadow-lg z-20">
+              <p className="text-sm sm:text-base font-semibold text-[#333333] mb-1">
+                Tidak ada budaya ditemukan
+              </p>
+              <p className="text-xs sm:text-sm text-[#618989]">
+                Coba ubah filter atau kata kunci pencarian
+              </p>
+            </div>
+          )}
       </div>
 
-      {showCard && (
+      {/* Mobile Card View */}
+      {selectedCulture && (
         <div className="sm:hidden mt-4">
-          <CulturalItemCard onClose={() => setShowCard(false)} />
+          <CulturalItemCard
+            onClose={() => setSelectedCulture(null)}
+            culture={selectedCulture}
+          />
+        </div>
+      )}
+
+      {/* Culture Count */}
+      {!loading && filteredCultures.length > 0 && (
+        <div className="mt-4 text-center">
+          <p className="text-sm text-[#618989]">
+            Menampilkan <span className="font-bold text-[#00A99D]">{filteredCultures.length}</span> budaya terdekat
+          </p>
         </div>
       )}
     </div>

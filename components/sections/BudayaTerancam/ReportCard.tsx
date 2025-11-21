@@ -75,7 +75,7 @@ const ReportCard = ({ report }: ReportCardProps) => {
           </p>
 
           <button className="flex items-center justify-center px-4 h-9 min-w-[84px] rounded-lg bg-[rgba(212,155,22,0.2)] hover:bg-[rgba(212,155,22,0.3)] transition-colors">
-            <span className="text-primary-gold font-bold text-sm leading-5">
+            <span className="text-primary-gold font-bold text-sm leading-5 text-[#D49B16]">
               Lihat Detail
             </span>
           </button>
