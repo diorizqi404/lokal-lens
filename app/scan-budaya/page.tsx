@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HeroSection from "@/components/sections/ScanBudaya/HeroSection";
 import ScannerSection from "@/components/sections/ScanBudaya/ScannerSection";
 import WhatCanYouScanSection from "@/components/sections/ScanBudaya/WhatCanYouScanSection";
@@ -86,7 +86,7 @@ export default function ScanBudayaPage() {
             </motion.div>
           )}
 
-          {scanState === 'AFTER_SCAN' && (
+            {scanState === 'AFTER_SCAN' && (
             <motion.div
               key="after-scan"
               initial={{ opacity: 0 }}
@@ -96,39 +96,56 @@ export default function ScanBudayaPage() {
             >
               {/* Back to Scanner Button */}
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-8"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mb-8"
               >
-                <button
-                  onClick={handleBackToScanner}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.5 15L7.5 10L12.5 5" stroke="#111818" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span className="text-sm font-semibold text-[#111818]">
-                    Pindai Lagi
-                  </span>
-                </button>
+              <button
+                onClick={() => {
+                handleBackToScanner();
+                setScanResult(null);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="#111818" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-sm font-semibold text-[#111818]">
+                Pindai Lagi
+                </span>
+              </button>
               </motion.div>
 
               {/* Results Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24">
-                <div className="space-y-8">
-                  <ScannerSection onScanComplete={handleScanComplete} />
-                  <TipsSection />
-                  <RecommendationsSection scanResult={scanResult} />
-                </div>
-                <div className="space-y-8">
-                  <ResultsSection data={scanResult} isLoading={isLoading} />
-                  <SpotlightSection location={scanResult?.location} />
-                  <TrendingScansSection />
-                </div>
+              {/* mobile */}
+              <div className="lg:hidden grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24">
+              <div className="space-y-8">
+                {/* <ScannerSection onScanComplete={handleScanComplete} /> */}
+                <ResultsSection data={scanResult} isLoading={isLoading} />
+                <TipsSection />
+                <RecommendationsSection scanResult={scanResult} />
+              </div>
+              <div className="space-y-8">
+                <SpotlightSection location={scanResult?.location} />
+                <TrendingScansSection />
+              </div>
+              </div>
+              {/* tablet+ */}
+              <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24">
+              <div className="space-y-8">
+                {/* <ScannerSection onScanComplete={handleScanComplete} /> */}
+                <ResultsSection data={scanResult} isLoading={isLoading} />
+                <TipsSection />
+              </div>
+              <div className="space-y-8">
+                <RecommendationsSection scanResult={scanResult} />
+                <TrendingScansSection />
+                <SpotlightSection location={scanResult?.location} />
+              </div>
               </div>
             </motion.div>
-          )}
+            )}
         </AnimatePresence>
       </div>
     </motion.main>
