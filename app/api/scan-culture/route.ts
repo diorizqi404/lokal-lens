@@ -199,8 +199,17 @@ PENTING:
     if (isValidCulture) {
       try {
         const objectType = extractObjectType(scanResult.name);
-        const category = getCategoryFromObjectType(objectType);
+        const categorySlug = getCategoryFromObjectType(objectType);
         const province = scanResult.location?.split(',')[1]?.trim() || null;
+        
+        // Lookup category by slug
+        let categoryId: number | null = null;
+        if (categorySlug) {
+          const categoryRecord = await prisma.category.findFirst({
+            where: { slug: categorySlug },
+          });
+          categoryId = categoryRecord?.id || null;
+        }
         
         // Cek apakah culture dengan nama serupa sudah ada
         const existingCulture = await prisma.culture.findFirst({
@@ -221,7 +230,7 @@ PENTING:
               name: scanResult.name,
               slug: scanResult.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, ''),
               description: scanResult.description || "Objek budaya Indonesia",
-              category: category as any,
+              category_id: categoryId,
               location: scanResult.location || "Indonesia",
               province: province || "Indonesia",
               city: scanResult.location?.split(',')[0]?.trim() || "",
@@ -233,17 +242,20 @@ PENTING:
           cultureId = newCulture.id;
         }
 
-        // Simpan scan history menggunakan raw query
-        await prisma.$executeRaw`
-          INSERT INTO scan_history (
-            user_id, culture_id, object_name, object_type, category, 
-            location, province, accuracy, description, scan_result, created_at
-          ) VALUES (
-            NULL, ${cultureId}, ${scanResult.name}, ${objectType}, ${category},
-            ${scanResult.location}, ${province}, ${scanResult.accuracy}, 
-            ${scanResult.description}, ${JSON.stringify(scanResult)}, NOW()
-          )
-        `;
+        // Simpan scan history dengan category_id
+        await prisma.scanHistory.create({
+          data: {
+            culture_id: cultureId,
+            object_name: scanResult.name,
+            object_type: objectType,
+            category_id: categoryId,
+            location: scanResult.location,
+            province: province,
+            accuracy: scanResult.accuracy,
+            description: scanResult.description,
+            scan_result: JSON.stringify(scanResult),
+          }
+        });
       } catch (dbError) {
         console.error("Database Error:", dbError);
         // Tetap return hasil scan meskipun gagal menyimpan ke database

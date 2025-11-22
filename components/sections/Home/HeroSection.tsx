@@ -58,6 +58,7 @@ const HeroSection = () => {
               whileHover={{ scale: 1.05, boxShadow: "0px 10px 30px rgba(19, 236, 91, 0.4)" }}
               whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.2 }}
+              className='rounded-full'
             >
               <Link href={'/scan-budaya'} className="flex items-center justify-center px-6 py-3 rounded-full bg-[#13EC5B] w-full sm:w-auto sm:min-w-[133px] h-12 hover:bg-[#10d952] transition-colors">
                 <span className="text-base font-bold leading-6 tracking-[0.24px] text-[#111813]">

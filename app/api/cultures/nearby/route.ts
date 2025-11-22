@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, CultureCategory } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -46,17 +46,18 @@ export async function GET(request: NextRequest) {
       status: 'active',
     };
 
-    // Add category filter if provided
+    // Add category filter if provided (filter by category slug)
     if (categoryParam) {
-      // Convert string to lowercase CultureCategory enum
-      const categoryValue = categoryParam.toLowerCase() as CultureCategory;
-      whereClause.category = categoryValue;
+      whereClause.category_rel = {
+        slug: categoryParam,
+      };
     }
 
-    // Ambil semua budaya dengan koordinat
+    // Ambil semua budaya dengan koordinat dan include category
     const cultures = await prisma.culture.findMany({
       where: whereClause,
       include: {
+        category_rel: true,
         images: {
           where: {
             is_primary: true,
@@ -93,7 +94,9 @@ export async function GET(request: NextRequest) {
           slug: culture.slug,
           subtitle: culture.subtitle,
           description: culture.description,
-          category: culture.category,
+          category: culture.category_rel?.slug || null,
+          categoryName: culture.category_rel?.name || null,
+          categoryIcon: culture.category_rel?.icon || null,
           location: culture.location,
           province: culture.province,
           city: culture.city,

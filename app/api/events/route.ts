@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || '';
     const status = searchParams.get('status') || '';
     const month = searchParams.get('month') || '';
+    const sort = searchParams.get('sort') || 'nearest'; // 'nearest' or 'farthest'
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
     const skip = (page - 1) * limit;
@@ -28,8 +29,14 @@ export async function GET(request: NextRequest) {
       where.location_province = province;
     }
 
+    // Lookup category by slug if provided
     if (category) {
-      where.category = category;
+      const categoryRecord = await prisma.category.findUnique({
+        where: { slug: category },
+      });
+      if (categoryRecord) {
+        where.category_id = categoryRecord.id;
+      }
     }
 
     if (status) {
@@ -53,7 +60,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: {
-          date_start: 'asc',
+          date_start: sort === 'farthest' ? 'desc' : 'asc',
         },
         select: {
           id: true,
@@ -72,6 +79,14 @@ export async function GET(request: NextRequest) {
           status: true,
           category: true,
           views: true,
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+            },
+          },
         },
       }),
       prisma.event.count({ where }),
@@ -129,7 +144,9 @@ export async function GET(request: NextRequest) {
         image: event.thumbnail || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&auto=format&fit=crop&q=60',
         status: statusText,
         statusColor: statusColor,
-        category: event.category,
+        category: event.category_rel?.name || event.category,
+        categorySlug: event.category_rel?.slug,
+        categoryIcon: event.category_rel?.icon,
         views: event.views,
       };
     });

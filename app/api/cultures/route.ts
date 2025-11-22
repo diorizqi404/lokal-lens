@@ -33,8 +33,14 @@ export async function GET(request: NextRequest) {
       where.province = province;
     }
 
+    // Lookup category by slug if provided
     if (category) {
-      where.category = category;
+      const categoryRecord = await prisma.category.findUnique({
+        where: { slug: category },
+      });
+      if (categoryRecord) {
+        where.category_id = categoryRecord.id;
+      }
     }
 
     // Get cultures with pagination
@@ -45,6 +51,14 @@ export async function GET(request: NextRequest) {
           images: {
             where: { is_primary: true },
             take: 1,
+          },
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+            },
           },
         },
         orderBy: {
@@ -67,6 +81,9 @@ export async function GET(request: NextRequest) {
       thumbnail: culture.images[0]?.image_url || culture.thumbnail,
       is_endangered: culture.is_endangered,
       subtitle: culture.subtitle,
+      category: culture.category_rel?.name || culture.category,
+      categorySlug: culture.category_rel?.slug,
+      categoryIcon: culture.category_rel?.icon,
     }));
 
     return NextResponse.json({

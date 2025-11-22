@@ -11,6 +11,8 @@ interface CulturalItemCardProps {
     subtitle: string | null;
     description: string | null;
     category: string | null;
+    categoryName: string | null;
+    categoryIcon: string | null;
     location: string | null;
     province: string | null;
     city: string | null;
@@ -52,8 +54,9 @@ const CulturalItemCard = ({ onClose, culture }: CulturalItemCardProps) => {
     return null;
   }
 
-  const categoryColor = culture.category ? categoryColors[culture.category] || '#00A99D' : '#00A99D';
-  const categoryLabel = culture.category ? categoryLabels[culture.category] || culture.category : 'Budaya';
+  const categorySlug = culture.category?.toLowerCase() || '';
+  const categoryColor = categorySlug ? categoryColors[categorySlug] || '#00A99D' : '#00A99D';
+  const categoryLabel = culture.categoryName || 'Lainnya';
   const displayImage = culture.image || culture.thumbnail || 'https://via.placeholder.com/432x320?text=No+Image';
   const displayDescription = culture.description || culture.subtitle || 'Tidak ada deskripsi tersedia';
 

@@ -11,6 +11,8 @@ interface Culture {
   subtitle: string | null;
   description: string | null;
   category: string | null;
+  categoryName: string | null;
+  categoryIcon: string | null;
   location: string | null;
   province: string | null;
   city: string | null;
@@ -172,8 +174,15 @@ const LeafletMapComponent = ({
 
     // Add new markers
     cultures.forEach((culture) => {
+      // Skip culture jika koordinat tidak valid
+      if (!culture.lat || !culture.long || isNaN(culture.lat) || isNaN(culture.long)) {
+        console.warn(`Skipping culture "${culture.name}" - invalid coordinates:`, culture.lat, culture.long);
+        return;
+      }
+
+      // Ambil warna berdasarkan category slug
       const color = culture.category
-        ? categoryColors[culture.category] || '#00A99D'
+        ? categoryColors[culture.category.toLowerCase()] || '#00A99D'
         : '#00A99D';
 
       // Create custom marker icon

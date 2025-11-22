@@ -27,15 +27,35 @@ export default function EventBudayaPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    province: '',
+    month: '',
+    category: '',
+    sort: 'nearest', // 'nearest' or 'farthest'
+  });
 
   useEffect(() => {
     fetchEvents();
-  }, [currentPage]);
+  }, [currentPage, searchQuery, filters]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/events?page=${currentPage}&limit=12`);
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '12',
+      });
+
+      if (searchQuery) params.append('search', searchQuery);
+      if (filters.province) params.append('province', filters.province);
+      if (filters.month) params.append('month', filters.month);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.sort) params.append('sort', filters.sort);
+
+      const response = await fetch(`/api/events?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
@@ -47,6 +67,16 @@ export default function EventBudayaPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   return (
@@ -80,8 +110,13 @@ export default function EventBudayaPage() {
 
       {/* Search and Filter Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
-        <SearchBar />
-        <FilterSection viewMode={viewMode} setViewMode={setViewMode} />
+        <SearchBar onSearch={handleSearch} />
+        <FilterSection 
+          viewMode={viewMode} 
+          setViewMode={setViewMode}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+        />
       </div>
 
       {/* Events Section - Grid or Calendar */}

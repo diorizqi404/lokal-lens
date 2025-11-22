@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,8 +17,14 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
 
+    // Lookup category by slug if provided
     if (category && category !== 'semua') {
-      where.category = category;
+      const categoryRecord = await prisma.category.findUnique({
+        where: { slug: category },
+      });
+      if (categoryRecord) {
+        where.category_id = categoryRecord.id;
+      }
     }
 
     if (search) {
@@ -45,6 +53,14 @@ export async function GET(request: NextRequest) {
                   avatar: true,
                 },
               },
+            },
+          },
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
             },
           },
           _count: {

@@ -1,6 +1,14 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+}
 
 interface FilterSidebarProps {
   selectedCategory: string;
@@ -13,6 +21,47 @@ interface FilterSidebarProps {
   onResetFilter: () => void;
 }
 
+const INDONESIAN_PROVINCES = [
+  'Aceh',
+  'Sumatera Utara',
+  'Sumatera Barat',
+  'Riau',
+  'Kepulauan Riau',
+  'Jambi',
+  'Sumatera Selatan',
+  'Kepulauan Bangka Belitung',
+  'Bengkulu',
+  'Lampung',
+  'Banten',
+  'DKI Jakarta',
+  'Jawa Barat',
+  'Jawa Tengah',
+  'DI Yogyakarta',
+  'Jawa Timur',
+  'Bali',
+  'Nusa Tenggara Barat',
+  'Nusa Tenggara Timur',
+  'Kalimantan Barat',
+  'Kalimantan Tengah',
+  'Kalimantan Selatan',
+  'Kalimantan Timur',
+  'Kalimantan Utara',
+  'Sulawesi Utara',
+  'Gorontalo',
+  'Sulawesi Tengah',
+  'Sulawesi Barat',
+  'Sulawesi Selatan',
+  'Sulawesi Tenggara',
+  'Maluku',
+  'Maluku Utara',
+  'Papua Barat',
+  'Papua Barat Daya',
+  'Papua',
+  'Papua Tengah',
+  'Papua Pegunungan',
+  'Papua Selatan',
+];
+
 const FilterSidebar = ({
   selectedCategory,
   setSelectedCategory,
@@ -23,6 +72,27 @@ const FilterSidebar = ({
   onApplyFilter,
   onResetFilter,
 }: FilterSidebarProps) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?type=culture');
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
     <motion.aside 
       initial={{ opacity: 0, x: -50 }}
@@ -61,12 +131,14 @@ const FilterSidebar = ({
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full h-[42px] px-3 py-2 rounded-[32px] border border-[#1B2A41] bg-[#E8C547] text-base font-normal leading-6 text-[#333333] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B2A41]"
+                  disabled={loadingCategories}
                 >
                   <option value="Semua Kategori">Semua Kategori</option>
-                  <option value="Tarian">Tarian</option>
-                  <option value="Musik">Musik</option>
-                  <option value="Kerajinan">Kerajinan</option>
-                  <option value="Upacara Adat">Upacara Adat</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.slug}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -87,11 +159,11 @@ const FilterSidebar = ({
                   className="w-full h-[42px] px-3 py-2 rounded-[32px] border border-[#1B2A41] bg-[#E8C547] text-base font-normal leading-6 text-[#333333] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1B2A41]"
                 >
                   <option value="Seluruh Indonesia">Seluruh Indonesia</option>
-                  <option value="Jawa Barat">Jawa Barat</option>
-                  <option value="Bali">Bali</option>
-                  <option value="Sumatera Utara">Sumatera Utara</option>
-                  <option value="DKI Jakarta">DKI Jakarta</option>
-                  <option value="Jawa Timur">Jawa Timur</option>
+                  {INDONESIAN_PROVINCES.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

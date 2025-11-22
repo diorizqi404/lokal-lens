@@ -14,8 +14,14 @@ export async function GET(request: NextRequest) {
       status: 'published',
     };
 
+    // Lookup category by slug if provided
     if (category && category !== 'all') {
-      whereClause.category = category;
+      const categoryRecord = await prisma.category.findUnique({
+        where: { slug: category },
+      });
+      if (categoryRecord) {
+        whereClause.category_id = categoryRecord.id;
+      }
     }
 
     if (difficulty && difficulty !== 'all') {
@@ -35,6 +41,14 @@ export async function GET(request: NextRequest) {
         time_limit: true,
         total_questions: true,
         created_at: true,
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+          },
+        },
         _count: {
           select: {
             attempts: true,

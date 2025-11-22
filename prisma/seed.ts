@@ -7,6 +7,55 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting seed...');
 
+  // ============= SEED CATEGORIES FIRST =============
+  console.log('📁 Seeding categories...');
+  await prisma.category.deleteMany({});
+
+  const categories = await prisma.category.createMany({
+    data: [
+      // Culture categories (from CultureCategory enum)
+      { name: 'Tarian', slug: 'tarian', description: 'Tarian tradisional', icon: '💃', type: 'culture' },
+      { name: 'Musik', slug: 'musik', description: 'Musik & alat musik tradisional', icon: '🎵', type: 'culture' },
+      { name: 'Pakaian', slug: 'pakaian', description: 'Pakaian adat', icon: '👘', type: 'culture' },
+      { name: 'Arsitektur', slug: 'arsitektur', description: 'Rumah adat & bangunan', icon: '🏛️', type: 'culture' },
+      { name: 'Kuliner', slug: 'kuliner', description: 'Makanan & minuman tradisional', icon: '🍜', type: 'culture' },
+      { name: 'Upacara', slug: 'upacara', description: 'Upacara adat', icon: '🎎', type: 'culture' },
+      { name: 'Kerajinan', slug: 'kerajinan', description: 'Kerajinan tangan', icon: '🎨', type: 'culture' },
+      { name: 'Senjata', slug: 'senjata', description: 'Senjata tradisional', icon: '⚔️', type: 'culture' },
+      { name: 'Permainan', slug: 'permainan', description: 'Permainan tradisional', icon: '🎲', type: 'culture' },
+      { name: 'Bahasa', slug: 'bahasa', description: 'Bahasa & aksara daerah', icon: '📜', type: 'culture' },
+      
+      // Article categories
+      { name: 'Seni & Budaya', slug: 'seni-budaya', description: 'Artikel tentang seni dan budaya', icon: '🎭', type: 'article' },
+      
+      // Quiz categories
+      { name: 'Candi', slug: 'candi', description: 'Kuis tentang candi-candi', icon: '🛕', type: 'quiz' },
+      
+      // Event categories
+      { name: 'Festival', slug: 'festival', description: 'Festival budaya', icon: '🎪', type: 'event' },
+      { name: 'Pertunjukan', slug: 'pertunjukan', description: 'Pertunjukan seni', icon: '🎭', type: 'event' },
+      { name: 'Pameran', slug: 'pameran', description: 'Pameran budaya', icon: '🖼️', type: 'event' },
+    ],
+  });
+
+  console.log(`✅ ${categories.count} categories seeded`);
+
+  // Fetch categories for reference in seeds
+  const categoryTarian = await prisma.category.findUnique({ where: { slug: 'tarian' } });
+  const categoryMusik = await prisma.category.findUnique({ where: { slug: 'musik' } });
+  const categoryPakaian = await prisma.category.findUnique({ where: { slug: 'pakaian' } });
+  const categoryArsitektur = await prisma.category.findUnique({ where: { slug: 'arsitektur' } });
+  const categoryKuliner = await prisma.category.findUnique({ where: { slug: 'kuliner' } });
+  const categoryUpacara = await prisma.category.findUnique({ where: { slug: 'upacara' } });
+  const categorySenjata = await prisma.category.findUnique({ where: { slug: 'senjata' } });
+  const categorySeniBudaya = await prisma.category.findUnique({ where: { slug: 'seni-budaya' } });
+  const categoryCandi = await prisma.category.findUnique({ where: { slug: 'candi' } });
+  const categoryFestival = await prisma.category.findUnique({ where: { slug: 'festival' } });
+  const categoryPertunjukan = await prisma.category.findUnique({ where: { slug: 'pertunjukan' } });
+  const categoryPameran = await prisma.category.findUnique({ where: { slug: 'pameran' } });
+
+  // ============= SEED USERS =============
+
   // Create admin user
   const adminPassword = await hashPassword('password');
   const admin = await prisma.user.upsert({
@@ -411,7 +460,7 @@ async function main() {
         content: `Wayang kulit adalah salah satu puncak seni budaya Indonesia yang berakar dari tradisi Jawa. Pertunjukan wayang kulit menggabungkan berbagai elemen seni seperti sastra, musik, tutur, rupa, dan pertunjukan yang sangat kompleks.\n\nWayang kulit telah ada sejak abad ke-10 Masehi di Jawa. Pertunjukan ini menggunakan boneka kulit yang diproyeksikan pada layar putih dengan lampu minyak kelapa. Dalang atau pemain wayang akan menggerakkan boneka sambil menceritakan kisah dari epos Mahabharata atau Ramayana.`,
         featured_image: 'https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=1200&q=80',
         author_id: admin.id,
-        category: 'Seni & Budaya',
+        category_id: categorySeniBudaya?.id,
         tags: '["wayang", "jawa", "tradisi", "seni pertunjukan", "UNESCO"]',
         province: 'Jawa Tengah',
         read_time: 8,
@@ -425,7 +474,7 @@ async function main() {
         content: `Tari Kecak adalah salah satu pertunjukan seni yang paling ikonik dari Bali. Tarian ini diciptakan pada tahun 1930-an dan telah menjadi salah satu daya tarik wisata budaya utama di Indonesia.\n\nTari Kecak diciptakan oleh seniman Bali I Wayan Limbak dan pelukis Jerman Walter Spies pada tahun 1930-an. Yang membuat Tari Kecak berbeda adalah penggunaan suara "cak-cak-cak" yang dilantunkan oleh puluhan penari pria yang duduk melingkar.`,
         featured_image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
         author_id: contributor.id,
-        category: 'Seni & Budaya',
+        category_id: categorySeniBudaya?.id,
         tags: '["tari", "bali", "kecak", "ramayana", "tradisi"]',
         province: 'Bali',
         read_time: 6,
@@ -439,7 +488,7 @@ async function main() {
         content: `Batik adalah kain bergambar yang pembuatannya secara khusus dengan menuliskan atau menerakan malam pada kain, kemudian pengolahannya diproses dengan cara tertentu.\n\nBatik telah ada di Indonesia sejak zaman Majapahit. Awalnya, batik hanya digunakan oleh kalangan keraton dan bangsawan. Seiring waktu, batik menyebar ke masyarakat luas dan menjadi identitas budaya Indonesia.`,
         featured_image: 'https://images.unsplash.com/photo-1610419312715-8e686a036c56?w=1200&q=80',
         author_id: admin.id,
-        category: 'Seni & Budaya',
+        category_id: categorySeniBudaya?.id,
         tags: '["batik", "unesco", "tradisi", "tekstil", "warisan budaya"]',
         province: 'Jawa Tengah',
         read_time: 7,
@@ -533,7 +582,7 @@ async function main() {
         description: 'Reog adalah salah satu kesenian budaya yang berasal dari Jawa Timur bagian barat-laut dan Ponorogo dianggap sebagai kota asal Reog yang sebenarnya. Gerbang kota Ponorogo dihiasi oleh sosok warok dan gemblak, dua sosok yang ikut tampil pada saat Reog dipertunjukkan.',
         long_description: 'Reog adalah salah satu budaya daerah di Indonesia yang masih sangat kental dengan hal-hal yang berbau mistis dan ilmu kebatinan yang kuat. Sejarahnya dimulai pada zaman Kerajaan Majapahit, di mana Ki Ageng Kutu, seorang abdi kerajaan, menciptakan tarian ini sebagai sindiran kepada Raja Kertabhumi.',
         meaning: 'Tarian ini menggambarkan singa barong, raja hutan, yang menjadi simbol bagi Kertabhumi, dan di atasnya bertengger bulu merak hingga menyerupai kipas raksasa yang menyimbolkan pengaruh kuat para rekannya dari kerajaan Tiongkok. Kesenian ini merupakan wujud kritik terhadap penguasa yang tunduk pada kehendak asing.',
-        category: 'tarian',
+        category_id: categoryTarian?.id,
         location: 'Ponorogo, Jawa Timur',
         province: 'Jawa Timur',
         city: 'Ponorogo',
@@ -551,7 +600,7 @@ async function main() {
         description: 'Tari Saman adalah tarian suku Gayo yang biasa ditampilkan untuk merayakan peristiwa-peristiwa penting dalam adat. Tarian ini juga digunakan untuk merayakan kelahiran Nabi Muhammad SAW.',
         long_description: 'Dalam beberapa literatur menyebutkan, tari Saman diciptakan oleh Syekh Saman, seorang ulama yang berasal dari Gayo, Aceh Tenggara. Tarian ini diciptakan untuk mendakwahkan ajaran Islam.',
         meaning: 'Tari Saman mengandung pendidikan keagamaan, sopan santun, kepahlawanan, kekompakan, dan kebersamaan. Semua penari harus bersatu dalam gerakan dan suara.',
-        category: 'tarian',
+        category_id: categoryTarian?.id,
         location: 'Gayo Lues, Aceh',
         province: 'Aceh',
         city: 'Gayo Lues',
@@ -569,7 +618,7 @@ async function main() {
         description: 'Batik Parang adalah salah satu motif batik tertua di Indonesia. Motif ini menggambarkan sebuah garis miring yang teratur membentuk huruf S.',
         long_description: 'Parang berasal dari kata "Pereng" yang berarti lereng. Motif ini menggambarkan lereng gunung yang digunakan oleh para raja dan keluarga kerajaan sebagai simbol kekuatan.',
         meaning: 'Motif parang melambangkan keluhuran budi, kekuatan, dan keteguhan hati. Dahulu, motif ini hanya boleh dikenakan oleh keluarga kerajaan Yogyakarta.',
-        category: 'pakaian',
+        category_id: categoryPakaian?.id,
         location: 'Yogyakarta, DI Yogyakarta',
         province: 'DI Yogyakarta',
         city: 'Yogyakarta',
@@ -587,7 +636,7 @@ async function main() {
         description: 'Rumah Gadang adalah nama untuk rumah adat Minangkabau yang merupakan rumah tradisional dan banyak jumpai di provinsi Sumatera Barat, Indonesia.',
         long_description: 'Rumah ini dikenal karena atapnya yang runcing dan melengkung menyerupai tanduk kerbau. Arsitekturnya mencerminkan sistem matrilineal masyarakat Minangkabau.',
         meaning: 'Rumah Gadang adalah simbol dari sistem kekerabatan matrilineal, di mana garis keturunan berasal dari pihak ibu. Rumah ini adalah milik kaum perempuan dan diwariskan secara turun temurun.',
-        category: 'arsitektur',
+        category_id: categoryArsitektur?.id,
         location: 'Bukittinggi, Sumatera Barat',
         province: 'Sumatera Barat',
         city: 'Bukittinggi',
@@ -605,7 +654,7 @@ async function main() {
         description: 'Angklung adalah alat musik multitonal tradisional yang terbuat dari bambu, dimainkan dengan cara digoyangkan.',
         long_description: 'Angklung berasal dari Jawa Barat dan telah diakui UNESCO sebagai Masterpiece of Oral and Intangible Heritage of Humanity pada tahun 2010.',
         meaning: 'Angklung melambangkan kebersamaan dan kerja sama, karena untuk menghasilkan melodi yang indah diperlukan koordinasi antara banyak pemain.',
-        category: 'musik',
+        category_id: categoryMusik?.id,
         location: 'Bandung, Jawa Barat',
         province: 'Jawa Barat',
         city: 'Bandung',
@@ -623,7 +672,7 @@ async function main() {
         description: 'Rendang adalah masakan daging bercita rasa pedas yang menggunakan campuran berbagai bumbu dan rempah-rempah khas Minangkabau.',
         long_description: 'Rendang telah dinobatkan sebagai hidangan paling enak di dunia versi CNN International pada tahun 2011. Proses memasak rendang memakan waktu berjam-jam.',
         meaning: 'Rendang melambangkan kearifan dan kesabaran masyarakat Minangkabau dalam mengolah makanan dengan sempurna melalui proses yang panjang.',
-        category: 'kuliner',
+        category_id: categoryKuliner?.id,
         location: 'Padang, Sumatera Barat',
         province: 'Sumatera Barat',
         city: 'Padang',
@@ -641,7 +690,7 @@ async function main() {
         description: 'Keris adalah senjata tikam khas Indonesia yang memiliki corak dan bentuk yang unik dengan banyak variasi pamor.',
         long_description: 'Keris bukan hanya senjata, tetapi juga merupakan benda pusaka yang dipercaya memiliki kekuatan spiritual. Telah diakui UNESCO sebagai warisan budaya tak benda.',
         meaning: 'Keris melambangkan kekuatan, kejantanan, dan status sosial pemiliknya. Setiap pamor dan lekukan memiliki makna filosofis tersendiri.',
-        category: 'senjata',
+        category_id: categorySenjata?.id,
         location: 'Surakarta, Jawa Tengah',
         province: 'Jawa Tengah',
         city: 'Surakarta',
@@ -659,7 +708,7 @@ async function main() {
         description: 'Wayang kulit adalah seni pertunjukan asli Indonesia yang melibatkan boneka kulit yang diproyeksikan pada layar.',
         long_description: 'Wayang kulit telah diakui UNESCO sebagai Masterpiece of Oral and Intangible Heritage of Humanity. Pertunjukan ini biasanya menceritakan kisah dari epos Ramayana dan Mahabharata.',
         meaning: 'Wayang kulit mengandung filosofi kehidupan yang mendalam, mengajarkan tentang kebaikan, kejahatan, dan karma dalam kehidupan manusia.',
-        category: 'upacara',
+        category_id: categoryUpacara?.id,
         location: 'Yogyakarta, DI Yogyakarta',
         province: 'DI Yogyakarta',
         city: 'Yogyakarta',
@@ -735,7 +784,7 @@ async function main() {
       slug: 'jelajah-candi-nusantara',
       description: 'Seberapa jauh pengetahuanmu tentang candi-candi megah yang tersebar di seluruh Indonesia?',
       thumbnail: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&q=80',
-      category: 'Candi',
+      category_id: categoryCandi?.id,
       difficulty: 'medium',
       time_limit: 5,
       total_questions: 10,
@@ -750,7 +799,7 @@ async function main() {
       slug: 'ragam-tarian-indonesia',
       description: 'Kenali berbagai tarian tradisional dari Sabang sampai Merauke dalam kuis yang seru ini.',
       thumbnail: 'https://images.unsplash.com/photo-1555992336-fb0d29498b13?w=800&q=80',
-      category: 'Tarian',
+      category_id: categoryTarian?.id,
       difficulty: 'easy',
       time_limit: 3,
       total_questions: 10,
@@ -765,7 +814,7 @@ async function main() {
       slug: 'cita-rasa-kuliner-khas',
       description: 'Tebak nama dan asal masakan tradisional Indonesia. Awas, bikin lapar!',
       thumbnail: 'https://images.unsplash.com/photo-1604429278231-e5d2d3e2e00c?w=800&q=80',
-      category: 'Kuliner',
+      category_id: categoryKuliner?.id,
       difficulty: 'medium',
       time_limit: 7,
       total_questions: 10,
@@ -999,7 +1048,7 @@ async function main() {
       longitude: 106.8019,
       price: 50000,
       status: 'available',
-      category: 'Festival',
+      category_id: categoryFestival?.id,
       organizer: 'Kementerian Pendidikan dan Kebudayaan',
       views: 1250,
       performers: {
@@ -1085,7 +1134,7 @@ async function main() {
       longitude: 106.8464,
       price: 250000,
       status: 'available',
-      category: 'Festival',
+      category_id: categoryFestival?.id,
       organizer: 'Java Festival Production',
       views: 3420,
       performers: {
@@ -1142,7 +1191,7 @@ async function main() {
       longitude: 115.2126,
       price: null,
       status: 'free',
-      category: 'Festival',
+      category_id: categoryFestival?.id,
       organizer: 'Pemerintah Provinsi Bali',
       views: 2150,
       performers: {
@@ -1200,7 +1249,7 @@ async function main() {
         longitude: 110.3691,
         price: null,
         status: 'sold_out',
-        category: 'Pertunjukan',
+        category_id: categoryPertunjukan?.id,
         organizer: 'Yayasan Taman Siswa',
         views: 4580,
       },
@@ -1222,7 +1271,7 @@ async function main() {
         longitude: 110.8192,
         price: 50000,
         status: 'available',
-        category: 'Pameran',
+        category_id: categoryPameran?.id,
         organizer: 'Dinas Perindustrian dan Perdagangan Kota Solo',
         views: 890,
       },
@@ -1244,7 +1293,7 @@ async function main() {
         longitude: 110.3695,
         price: null,
         status: 'free',
-        category: 'Festival',
+        category_id: categoryFestival?.id,
         organizer: 'Dinas Kebudayaan DIY',
         views: 5240,
       },

@@ -164,7 +164,7 @@ model Article {
   content        String   @db.LongText
   featured_image String
   author_id      Int      @map("author_id")
-  category       String
+  category_id    Int?     @map("category_id") // Foreign key to categories
   tags           String?  @db.Text // JSON array of tags
   province       String? // Related province
   read_time      Int      @default(5) @map("read_time") // in minutes
@@ -174,13 +174,15 @@ model Article {
   created_at     DateTime @default(now()) @map("created_at")
   updated_at     DateTime @updatedAt @map("updated_at")
 
-  author    User                  @relation(fields: [author_id], references: [id], onDelete: Cascade)
-  comments  ArticleComment[]
-  bookmarks UserArticleBookmark[]
+  author        User                  @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  category_rel  Category?             @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  comments      ArticleComment[]
+  bookmarks     UserArticleBookmark[]
 
   @@index([slug])
   @@index([is_highlight])
   @@index([published_at])
+  @@index([category_id])
   @@map("articles")
 }
 
@@ -244,7 +246,7 @@ model Culture {
   description      String           @db.Text
   long_description String?          @db.Text
   meaning          String?          @db.Text // Makna dan Filosofi
-  category         CultureCategory? // Kategori budaya
+  category_id      Int?             @map("category_id") // Foreign key to categories
   location         String // e.g., "Ponorogo, Jawa Timur"
   province         String // e.g., "Jawa Timur"
   city             String // e.g., "Ponorogo"
@@ -257,12 +259,13 @@ model Culture {
   created_at       DateTime         @default(now()) @map("created_at")
   updated_at       DateTime         @updatedAt @map("updated_at")
 
+  category_rel Category?      @relation(fields: [category_id], references: [id], onDelete: SetNull)
   images       CultureImage[]
   scan_history ScanHistory[]
 
   @@index([province])
   @@index([city])
-  @@index([category])
+  @@index([category_id])
   @@index([latitude, longitude])
   @@map("cultures")
 }
@@ -288,17 +291,28 @@ enum CultureStatus {
   draft
 }
 
-enum CultureCategory {
-  tarian // Tarian tradisional
-  musik // Musik & alat musik tradisional
-  pakaian // Pakaian adat
-  arsitektur // Rumah adat & bangunan
-  kuliner // Makanan & minuman tradisional
-  upacara // Upacara adat
-  kerajinan // Kerajinan tangan
-  senjata // Senjata tradisional
-  permainan // Permainan tradisional
-  bahasa // Bahasa & aksara daerah
+// ============= CATEGORY MODEL =============
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String? // Emoji or icon identifier
+  type        String // "culture", "event", "article", "quiz", "general"
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  cultures      Culture[]
+  articles      Article[]
+  quizzes       Quiz[]
+  events        Event[]
+  scan_histories ScanHistory[]
+
+  @@index([type])
+  @@index([slug])
+  @@map("categories")
 }
 
 // ============= QUIZ MODELS =============
@@ -309,7 +323,7 @@ model Quiz {
   slug            String         @unique
   description     String?        @db.Text
   thumbnail       String?
-  category        String? // e.g., "Candi", "Tarian", "Kuliner"
+  category_id     Int?           @map("category_id") // Foreign key to categories
   difficulty      QuizDifficulty @default(medium)
   time_limit      Int? // in minutes, null = no limit
   total_questions Int            @default(0)
@@ -317,12 +331,13 @@ model Quiz {
   created_at      DateTime       @default(now()) @map("created_at")
   updated_at      DateTime       @updatedAt @map("updated_at")
 
-  questions QuizQuestion[]
-  attempts  QuizAttempt[]
+  category_rel Category?      @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  questions    QuizQuestion[]
+  attempts     QuizAttempt[]
 
   @@index([slug])
   @@index([status])
-  @@index([category])
+  @@index([category_id])
   @@map("quizzes")
 }
 
@@ -435,7 +450,7 @@ model Event {
   map_embed_url     String?     @map("map_embed_url") @db.Text
   price             Int? // null = free event
   status            EventStatus @default(available)
-  category          String? // e.g., "Festival", "Pameran", "Pertunjukan"
+  category_id       Int?        @map("category_id") // Foreign key to categories
   organizer         String? // Event organizer name
   contact_email     String?     @map("contact_email")
   contact_phone     String?     @map("contact_phone")
@@ -444,13 +459,15 @@ model Event {
   created_at        DateTime    @default(now()) @map("created_at")
   updated_at        DateTime    @updatedAt @map("updated_at")
 
-  performers EventPerformer[]
-  galleries  EventGallery[]
+  category_rel Category?        @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  performers   EventPerformer[]
+  galleries    EventGallery[]
 
   @@index([slug])
   @@index([date_start])
   @@index([status])
   @@index([location_province])
+  @@index([category_id])
   @@map("events")
 }
 
@@ -548,7 +565,7 @@ model ScanHistory {
   culture_id  Int?     @map("culture_id") // reference ke culture jika sudah ada di database
   object_name String   @map("object_name") // Nama objek yang di-scan (contoh: Batik Parang Rusak)
   object_type String   @map("object_type") // Tipe objek (batik, wayang, keris, tarian, makanan, dll)
-  category    String? // Kategori lebih spesifik
+  category_id Int?     @map("category_id") // Foreign key to categories
   location    String? // Lokasi asal objek
   province    String? // Provinsi
   accuracy    String? // Persentage akurasi (contoh: "92%")
@@ -557,13 +574,15 @@ model ScanHistory {
   scan_result String?  @db.Text // JSON full result dari Gemini AI
   created_at  DateTime @default(now()) @map("created_at")
 
-  user    User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  culture Culture? @relation(fields: [culture_id], references: [id], onDelete: SetNull)
+  user         User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  culture      Culture?  @relation(fields: [culture_id], references: [id], onDelete: SetNull)
+  category_rel Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([culture_id])
   @@index([object_type])
   @@index([province])
+  @@index([category_id])
   @@index([created_at])
   @@map("scan_history")
 }

@@ -1,48 +1,234 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface FilterSectionProps {
   viewMode: 'grid' | 'calendar';
   setViewMode: (mode: 'grid' | 'calendar') => void;
+  filters: {
+    province: string;
+    month: string;
+    category: string;
+    sort: string;
+  };
+  onFilterChange: (key: string, value: string) => void;
 }
 
-export default function FilterSection({ viewMode, setViewMode }: FilterSectionProps) {
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+}
+
+export default function FilterSection({ viewMode, setViewMode, filters, onFilterChange }: FilterSectionProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?type=event');
+        const result = await response.json();
+        if (result.success) {
+          setCategories(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Data untuk dropdown
+  const provinces = [
+    'Semua Provinsi',
+    'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Jambi', 'Sumatera Selatan',
+    'Bengkulu', 'Lampung', 'Kepulauan Bangka Belitung', 'Kepulauan Riau',
+    'DKI Jakarta', 'Jawa Barat', 'Jawa Tengah', 'DI Yogyakarta', 'Jawa Timur', 'Banten',
+    'Bali', 'Nusa Tenggara Barat', 'Nusa Tenggara Timur',
+    'Kalimantan Barat', 'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara',
+    'Sulawesi Utara', 'Sulawesi Tengah', 'Sulawesi Selatan', 'Sulawesi Tenggara', 'Gorontalo', 'Sulawesi Barat',
+    'Maluku', 'Maluku Utara', 'Papua Barat', 'Papua',
+  ];
+
+  const months = [
+    { label: 'Semua Bulan', value: '' },
+    { label: 'Januari 2025', value: '2025-01' },
+    { label: 'Februari 2025', value: '2025-02' },
+    { label: 'Maret 2025', value: '2025-03' },
+    { label: 'April 2025', value: '2025-04' },
+    { label: 'Mei 2025', value: '2025-05' },
+    { label: 'Juni 2025', value: '2025-06' },
+    { label: 'Juli 2025', value: '2025-07' },
+    { label: 'Agustus 2025', value: '2025-08' },
+    { label: 'September 2025', value: '2025-09' },
+    { label: 'Oktober 2025', value: '2025-10' },
+    { label: 'November 2025', value: '2025-11' },
+    { label: 'Desember 2025', value: '2025-12' },
+  ];
+
+  const sortOptions = [
+    { label: 'Tanggal Terdekat', value: 'nearest' },
+    { label: 'Tanggal Terjauh', value: 'farthest' },
+  ];
+
+  const getDisplayLabel = (key: string) => {
+    switch (key) {
+      case 'province':
+        return filters.province || 'Semua Provinsi';
+      case 'month':
+        const month = months.find(m => m.value === filters.month);
+        return month?.label || 'Semua Bulan';
+      case 'category':
+        if (!filters.category) return 'Semua Kategori';
+        const category = categories.find(c => c.slug === filters.category);
+        return category ? `${category.icon || ''} ${category.name}`.trim() : filters.category;
+      case 'sort':
+        const sort = sortOptions.find(s => s.value === filters.sort);
+        return `Urutkan: ${sort?.label || 'Tanggal Terdekat'}`;
+      default:
+        return '';
+    }
+  };
 
   const FilterButton = ({ 
-    label, 
-    id 
+    id,
+    options,
+    onSelect
   }: { 
-    label: string; 
-    id: string; 
-  }) => (
-    <button
-      onClick={() => setOpenDropdown(openDropdown === id ? null : id)}
-      className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-lg text-sm font-medium text-[#192A51] hover:border-[#D4A017] hover:bg-[#FFF9F0] transition-all duration-200"
-    >
-      <span>{label}</span>
-      <svg 
-        width="24" 
-        height="28" 
-        viewBox="0 0 25 28" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg" 
-        className={`w-5 h-6 transition-transform duration-200 ${openDropdown === id ? 'rotate-180' : ''}`}
-      >
-        <path d="M12.01 17.2812L6.17667 11.4479L7.53778 10.0868L12.01 14.559L16.4822 10.0868L17.8433 11.4479L12.01 17.2812Z" fill="#5C6B8A"/>
-      </svg>
-    </button>
-  );
+    id: string;
+    options: string[] | { label: string; value: string }[] | Category[];
+    onSelect: (value: string) => void;
+  }) => {
+    const isOpen = openDropdown === id;
+    const label = getDisplayLabel(id);
+    const hasActiveFilter = (id === 'province' && filters.province) ||
+                           (id === 'month' && filters.month) ||
+                           (id === 'category' && filters.category);
+
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setOpenDropdown(isOpen ? null : id)}
+          className={`flex items-center gap-2 px-4 py-2.5 bg-white border rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+            hasActiveFilter 
+              ? 'border-[#D4A017] bg-[#FFF9F0] text-[#D4A017]'
+              : 'border-[#EAE3D9] text-[#192A51] hover:border-[#D4A017] hover:bg-[#FFF9F0]'
+          }`}
+        >
+          <span>{label}</span>
+          <svg 
+            width="24" 
+            height="28" 
+            viewBox="0 0 25 28" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg" 
+            className={`w-5 h-6 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          >
+            <path d="M12.01 17.2812L6.17667 11.4479L7.53778 10.0868L12.01 14.559L16.4822 10.0868L17.8433 11.4479L12.01 17.2812Z" fill="currentColor"/>
+          </svg>
+        </button>
+
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-2 bg-white border border-[#EAE3D9] rounded-lg shadow-lg z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
+            {id === 'category' ? (
+              <>
+                <button
+                  onClick={() => {
+                    onSelect('');
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-[#192A51] hover:bg-[#FFF9F0] transition-colors"
+                >
+                  Semua Kategori
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      onSelect(cat.slug);
+                      setOpenDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[#192A51] hover:bg-[#FFF9F0] transition-colors"
+                  >
+                    {cat.icon && <span className="mr-2">{cat.icon}</span>}
+                    {cat.name}
+                  </button>
+                ))}
+              </>
+            ) : Array.isArray(options) && typeof options[0] === 'string' ? (
+              (options as string[]).map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    const value = option.includes('Semua') ? '' : option;
+                    onSelect(value);
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-[#192A51] hover:bg-[#FFF9F0] transition-colors"
+                >
+                  {option}
+                </button>
+              ))
+            ) : (
+              (options as { label: string; value: string }[]).map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    onSelect(option.value);
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-[#192A51] hover:bg-[#FFF9F0] transition-colors"
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+    <div ref={dropdownRef} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
       {/* Filter Buttons */}
       <div className="flex items-center gap-3 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-hide">
-        <FilterButton label="Semua Provinsi" id="province" />
-        <FilterButton label="Bulan Ini" id="month" />
-        <FilterButton label="Kategori" id="category" />
-        <FilterButton label="Urutkan: Tanggal Terdekat" id="sort" />
+        <FilterButton 
+          id="province" 
+          options={provinces}
+          onSelect={(value) => onFilterChange('province', value)}
+        />
+        <FilterButton 
+          id="month" 
+          options={months}
+          onSelect={(value) => onFilterChange('month', value)}
+        />
+        <FilterButton 
+          id="category" 
+          options={categories}
+          onSelect={(value) => onFilterChange('category', value)}
+        />
+        <FilterButton 
+          id="sort" 
+          options={sortOptions}
+          onSelect={(value) => onFilterChange('sort', value)}
+        />
       </div>
 
       {/* View Toggle */}

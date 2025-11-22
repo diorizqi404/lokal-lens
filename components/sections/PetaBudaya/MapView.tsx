@@ -10,6 +10,13 @@ const LeafletMapComponent = dynamic(
   { ssr: false }
 );
 
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+}
+
 interface Culture {
   id: string;
   name: string;
@@ -17,6 +24,8 @@ interface Culture {
   subtitle: string | null;
   description: string | null;
   category: string | null;
+  categoryName: string | null;
+  categoryIcon: string | null;
   location: string | null;
   province: string | null;
   city: string | null;
@@ -49,11 +58,29 @@ const categoryColors: Record<string, string> = {
 const MapView = ({ selectedCategory, selectedProvince }: MapViewProps) => {
   const [selectedCulture, setSelectedCulture] = useState<Culture | null>(null);
   const [cultures, setCultures] = useState<Culture[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationPermission, setLocationPermission] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+
+  // Fetch categories untuk legend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?type=culture');
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Ambil lokasi user dengan permission request
   useEffect(() => {
@@ -107,11 +134,11 @@ const MapView = ({ selectedCategory, selectedProvince }: MapViewProps) => {
         const params = new URLSearchParams({
           lat: userLocation.lat.toString(),
           lng: userLocation.lng.toString(),
-          radius: '1000', // 1000km radius
+          radius: '5180053', // 1000km radius
         });
 
         if (selectedCategory && selectedCategory !== 'Semua Kategori') {
-          params.append('category', selectedCategory.toLowerCase());
+          params.append('category', selectedCategory);
         }
 
         const response = await fetch(`/api/cultures/nearby?${params}`);
@@ -196,35 +223,22 @@ const MapView = ({ selectedCategory, selectedProvince }: MapViewProps) => {
           </div>
 
           {/* Legend Overlay */}
-          <div className="absolute hidden sm:block top-4 right-4 lg:right-6 rounded-[32px] bg-white/90 backdrop-blur-sm shadow-lg p-4 w-48 z-20">
+          <div className="absolute hidden sm:block top-4 right-4 lg:right-6 rounded-[32px] bg-white/90 backdrop-blur-sm shadow-lg p-4 max-w-[200px] z-20">
             <h3 className="text-base font-bold leading-6 text-[#333333] mb-3">
               Legenda
             </h3>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FD7E14]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Tarian</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#4A90E2]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Musik</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#9013FE]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Kerajinan</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#D0021B]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Upacara</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Pakaian</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FF5722]"></div>
-                <span className="text-sm font-normal leading-5 text-[#333333]">Kuliner</span>
-              </div>
+            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+              {categories.map((category) => (
+                <div key={category.id} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: categoryColors[category.slug] || '#9CA3AF' }}
+                  ></div>
+                  <span className="text-sm font-normal leading-5 text-[#333333]">
+                    {category.name}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
