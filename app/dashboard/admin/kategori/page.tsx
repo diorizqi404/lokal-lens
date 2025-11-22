@@ -237,10 +237,7 @@ export default function KategoriPage() {
                     Deskripsi
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Jumlah Budaya
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Slug
+                    Tipe
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Aksi
@@ -268,19 +265,8 @@ export default function KategoriPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                          {(category._count?.cultures || 0) + 
-                           (category._count?.articles || 0) + 
-                           (category._count?.quizzes || 0) + 
-                           (category._count?.events || 0) + 
-                           (category._count?.scan_histories || 0)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <code className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm font-mono">
-                        {category.slug}
+                        {category.type}
                       </code>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -381,9 +367,6 @@ export default function KategoriPage() {
                     >
                       <option value="culture">Budaya (Culture)</option>
                       <option value="event">Event</option>
-                      <option value="article">Artikel</option>
-                      <option value="quiz">Kuis</option>
-                      <option value="general">Umum</option>
                     </select>
                     <p className="mt-1 text-xs text-gray-500">
                       Pilih tipe kategori untuk penggunaan spesifik

@@ -46,6 +46,13 @@ export async function GET(request: NextRequest) {
               full_name: true,
               email: true
             }
+          },
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
+            }
           }
         },
         orderBy: { created_at: 'desc' }
@@ -100,11 +107,12 @@ export async function POST(request: NextRequest) {
       excerpt,
       content,
       featured_image,
-      category,
+      category_id,
       tags,
       province,
       read_time,
-      is_highlight
+      is_highlight,
+      status
     } = body;
     
     // Check if slug already exists
@@ -127,11 +135,12 @@ export async function POST(request: NextRequest) {
         content,
         featured_image,
         author_id: decoded.userId,
-        category,
+        category_id: category_id || null,
         tags,
         province,
         read_time: read_time || 5,
-        is_highlight: is_highlight || false
+        is_highlight: is_highlight || false,
+        status: status || 'draft'
       },
       include: {
         author: {
@@ -139,6 +148,13 @@ export async function POST(request: NextRequest) {
             id: true,
             full_name: true,
             email: true
+          }
+        },
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
           }
         }
       }

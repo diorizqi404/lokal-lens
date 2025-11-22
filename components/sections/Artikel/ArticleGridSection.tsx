@@ -17,6 +17,12 @@ interface Article {
     id: number;
     full_name: string;
   };
+  category_rel?: {
+    id: number;
+    name: string;
+    slug: string;
+    icon: string | null;
+  };
 }
 
 interface ArticleGridSectionProps {
@@ -176,9 +182,9 @@ const ArticleGridSection = ({ page, category, search }: ArticleGridSectionProps)
                     <div>
                       <span
                         className="font-noto text-sm font-bold leading-5"
-                        style={{ color: getCategoryColor(article.category) }}
+                        style={{ color: getCategoryColor(article.category_rel?.name || article.category) }}
                       >
-                        {article.category}
+                        {article.category_rel?.name || article.category}
                       </span>
                     </div>
 

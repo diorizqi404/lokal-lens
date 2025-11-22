@@ -39,9 +39,52 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        include: {
-          performers: true,
-          galleries: true
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          long_description: true,
+          thumbnail: true,
+          category_id: true,
+          date_start: true,
+          date_end: true,
+          time_start: true,
+          time_end: true,
+          location_name: true,
+          location_city: true,
+          location_province: true,
+          location_address: true,
+          latitude: true,
+          longitude: true,
+          map_embed_url: true,
+          price: true,
+          status: true,
+          organizer: true,
+          contact_email: true,
+          contact_phone: true,
+          website_url: true,
+          views: true,
+          created_at: true,
+          updated_at: true,
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true
+            }
+          },
+          galleries: {
+            orderBy: {
+              order_number: 'asc'
+            }
+          },
+          performers: {
+            orderBy: {
+              order_number: 'asc'
+            }
+          }
         },
         orderBy: { date_start: 'desc' }
       }),
@@ -70,7 +113,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new event
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -80,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -107,7 +151,7 @@ export async function POST(request: NextRequest) {
       map_embed_url,
       price,
       status,
-      category,
+      category_id,
       organizer,
       contact_email,
       contact_phone,
@@ -135,6 +179,7 @@ export async function POST(request: NextRequest) {
         description,
         long_description,
         thumbnail,
+        category_id: category_id ? parseInt(category_id) : null,
         date_start: new Date(date_start),
         date_end: new Date(date_end),
         time_start,
@@ -148,7 +193,6 @@ export async function POST(request: NextRequest) {
         map_embed_url,
         price,
         status: status || 'available',
-        category,
         organizer,
         contact_email,
         contact_phone,
@@ -171,6 +215,14 @@ export async function POST(request: NextRequest) {
         } : undefined
       },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         performers: true,
         galleries: true
       }

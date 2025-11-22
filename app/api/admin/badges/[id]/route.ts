@@ -7,11 +7,12 @@ const prisma = new PrismaClient();
 // GET - Get badge by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const badge = await prisma.badge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!badge) {
@@ -37,9 +38,10 @@ export async function GET(
 // PUT - Update badge
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -69,7 +71,7 @@ export async function PUT(
     } = body;
     
     const existingBadge = await prisma.badge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!existingBadge) {
@@ -80,7 +82,7 @@ export async function PUT(
     }
     
     const badge = await prisma.badge.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         name,
         description,
@@ -108,9 +110,10 @@ export async function PUT(
 // DELETE - Delete badge
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -130,7 +133,7 @@ export async function DELETE(
     }
     
     const badge = await prisma.badge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!badge) {
@@ -141,7 +144,7 @@ export async function DELETE(
     }
     
     await prisma.badge.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     return NextResponse.json({

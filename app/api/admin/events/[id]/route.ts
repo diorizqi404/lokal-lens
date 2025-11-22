@@ -7,12 +7,21 @@ const prisma = new PrismaClient();
 // GET - Get event by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const event = await prisma.event.findUnique({
       where: { id: parseInt(params.id) },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         performers: { orderBy: { order_number: 'asc' } },
         galleries: { orderBy: { order_number: 'asc' } }
       }
@@ -41,10 +50,12 @@ export async function GET(
 // PUT - Update event
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const params = await context.params;
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -54,7 +65,7 @@ export async function PUT(
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -81,7 +92,7 @@ export async function PUT(
       map_embed_url,
       price,
       status,
-      category,
+      category_id,
       organizer,
       contact_email,
       contact_phone,
@@ -136,6 +147,7 @@ export async function PUT(
         description,
         long_description,
         thumbnail,
+        category_id: category_id ? parseInt(category_id) : undefined,
         date_start: date_start ? new Date(date_start) : undefined,
         date_end: date_end ? new Date(date_end) : undefined,
         time_start,
@@ -149,7 +161,6 @@ export async function PUT(
         map_embed_url,
         price,
         status,
-        category,
         organizer,
         contact_email,
         contact_phone,
@@ -172,6 +183,14 @@ export async function PUT(
         } : undefined
       },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         performers: true,
         galleries: true
       }
@@ -194,10 +213,12 @@ export async function PUT(
 // DELETE - Delete event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const params = await context.params;
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -207,7 +228,7 @@ export async function DELETE(
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || decoded.role !== 'admin') {
+    if (!decoded || role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden - Admin only' },
         { status: 403 }

@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth/AuthContext';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/lib/auth/AuthContext';
+import FormModal from '@/components/ui/FormModal';
 
 interface Badge {
   id: number;
@@ -247,8 +246,14 @@ export default function BadgesListPage() {
                 </tr>
               </thead>
               <tbody>
-                {badges.map((badge) => (
-                  <tr key={badge.id} className="border-b border-gray-100 hover:bg-gray-50">
+                {badges.map((badge, index) => (
+                  <motion.tr
+                    key={badge.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  >
                     <td className="py-3 px-4">
                       <div className="text-2xl">{badge.icon}</div>
                     </td>
@@ -265,29 +270,35 @@ export default function BadgesListPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2">
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => handleDetail(badge)}
-                          className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="px-4 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
                         >
                           Detail
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => handleEdit(badge)}
-                          className="px-3 py-1 text-sm text-primary-green hover:bg-green-50 rounded-lg transition-colors"
+                          className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                         >
                           Edit
-                        </button>
+                        </motion.button>
                         {user?.role === 'admin' && (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={() => handleDeleteClick(badge)}
-                            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="px-4 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
                           >
-                            Delete
-                          </button>
+                            Hapus
+                          </motion.button>
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -317,14 +328,13 @@ export default function BadgesListPage() {
       </div>
 
       {/* Form Modal (Add/Edit) */}
-      <Modal
+      <FormModal
         isOpen={showFormModal}
         onClose={() => {
           setShowFormModal(false);
           resetForm();
         }}
         title={isEditMode ? 'Edit Lencana' : 'Tambah Lencana'}
-        size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -336,7 +346,7 @@ export default function BadgesListPage() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 required
               />
             </div>
@@ -348,7 +358,7 @@ export default function BadgesListPage() {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 rows={3}
                 required
               />
@@ -362,7 +372,7 @@ export default function BadgesListPage() {
                 type="text"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 placeholder="🏆"
                 required
               />
@@ -376,7 +386,7 @@ export default function BadgesListPage() {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 required
               >
                 <option value="explorer">Explorer</option>
@@ -387,7 +397,7 @@ export default function BadgesListPage() {
               </select>
             </div>
 
-            <div>
+            <div className='col-span-2'>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Poin <span className="text-red-500">*</span>
               </label>
@@ -395,7 +405,7 @@ export default function BadgesListPage() {
                 type="number"
                 value={formData.points}
                 onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 min="1"
                 required
               />
@@ -408,7 +418,7 @@ export default function BadgesListPage() {
               <textarea
                 value={formData.requirement}
                 onChange={(e) => setFormData({ ...formData, requirement: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all"
                 rows={3}
                 placeholder="Contoh: Scan 10 budaya berbeda"
                 required
@@ -417,63 +427,66 @@ export default function BadgesListPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 setShowFormModal(false);
                 resetForm();
               }}
-              className="px-6 py-2 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
             >
               Batal
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
               disabled={formLoading}
-              className="px-6 py-2 bg-primary-green text-white rounded-xl font-semibold hover:bg-primary-green/90 disabled:opacity-50"
+              whileHover={{ scale: formLoading ? 1 : 1.02 }}
+              whileTap={{ scale: formLoading ? 1 : 0.98 }}
+              className="px-6 py-2.5 bg-[#D4A017] text-white rounded-xl font-semibold hover:bg-[#B38B12] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {formLoading ? 'Menyimpan...' : isEditMode ? 'Update' : 'Simpan'}
-            </button>
+              {formLoading ? 'Menyimpan...' : isEditMode ? '💾 Update' : '✨ Simpan'}
+            </motion.button>
           </div>
         </form>
-      </Modal>
+      </FormModal>
 
       {/* Detail Modal */}
-      <Modal
+      <FormModal
         isOpen={showDetailModal}
         onClose={() => {
           setShowDetailModal(false);
           setSelectedBadge(null);
         }}
         title="Detail Lencana"
-        size="lg"
       >
         {selectedBadge && (
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl">
               <div className="text-5xl">{selectedBadge.icon}</div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{selectedBadge.name}</h3>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getCategoryBadge(selectedBadge.category)}`}>
+                <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium capitalize ${getCategoryBadge(selectedBadge.category)}`}>
                   {selectedBadge.category}
                 </span>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-1">Deskripsi</h3>
+            <div className="bg-green-50 p-4 rounded-xl">
+              <h3 className="text-sm font-semibold text-green-700 mb-1">Deskripsi</h3>
               <p className="text-gray-900">{selectedBadge.description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-1">Poin</h3>
-                <p className="text-gray-900">{selectedBadge.points} poin</p>
+              <div className="bg-yellow-50 p-4 rounded-xl">
+                <h3 className="text-sm font-semibold text-yellow-700 mb-1">Poin</h3>
+                <p className="text-gray-900 font-semibold">🎯 {selectedBadge.points} poin</p>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-1">Requirement</h3>
+            <div className="bg-blue-50 p-4 rounded-xl">
+              <h3 className="text-sm font-semibold text-blue-700 mb-1">Requirement</h3>
               <p className="text-gray-900">{selectedBadge.requirement}</p>
             </div>
 
@@ -489,24 +502,100 @@ export default function BadgesListPage() {
                 })}
               </p>
             </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedBadge(null);
+                }}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Tutup
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowDetailModal(false);
+                  handleEdit(selectedBadge);
+                }}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                ✏️ Edit Lencana
+              </motion.button>
+            </div>
           </div>
         )}
-      </Modal>
+      </FormModal>
 
       {/* Delete Confirmation */}
-      <ConfirmDialog
+      <FormModal
         isOpen={showDeleteDialog}
         onClose={() => {
           setShowDeleteDialog(false);
           setSelectedBadge(null);
         }}
-        onConfirm={handleDelete}
-        title="Hapus Lencana"
-        message={`Apakah Anda yakin ingin menghapus lencana "${selectedBadge?.name}"? Tindakan ini tidak dapat dibatalkan.`}
-        confirmText="Hapus"
-        cancelText="Batal"
-        type="danger"
-      />
+        title="⚠️ Hapus Lencana"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-600">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+              </svg>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Hapus "{selectedBadge?.name}"?
+            </h3>
+            <p className="text-gray-600">
+              Apakah Anda yakin ingin menghapus lencana ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+          </div>
+
+          {selectedBadge && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">{selectedBadge.icon}</div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{selectedBadge.name}</p>
+                  <p className="text-sm text-gray-600 capitalize">{selectedBadge.category} • {selectedBadge.points} poin</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setSelectedBadge(null);
+              }}
+              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Batal
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleDelete}
+              className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+            >
+              🗑️ Ya, Hapus
+            </motion.button>
+          </div>
+        </div>
+      </FormModal>
     </div>
   );
 }

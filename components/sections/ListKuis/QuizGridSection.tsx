@@ -15,10 +15,24 @@ interface Quiz {
   time_limit: number | null;
   total_questions: number;
   total_attempts: number;
+  category_rel?: {
+    id: number;
+    name: string;
+    slug: string;
+    icon: string | null;
+  };
+}
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
 }
 
 interface QuizGridSectionProps {
   quizzes: Quiz[];
+  categories: Category[];
   loading: boolean;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
@@ -33,28 +47,17 @@ const difficultyMap: Record<string, 'Mudah' | 'Menengah' | 'Sulit'> = {
 };
 
 const categoryColors: Record<string, string> = {
-  'Candi': 'rgba(212, 160, 23, 0.90)',
-  'Tarian': 'rgba(192, 57, 43, 0.90)',
-  'Kuliner': 'rgba(0, 108, 132, 0.90)',
-  'Musik': 'rgba(76, 144, 226, 0.90)',
-  'Pakaian': 'rgba(233, 30, 99, 0.90)',
-  'Arsitektur': 'rgba(156, 39, 176, 0.90)',
-  'Upacara': 'rgba(208, 2, 27, 0.90)',
-  'Kerajinan': 'rgba(144, 19, 254, 0.90)',
+  'tarian': 'rgba(253, 126, 20, 0.90)',
+  'musik': 'rgba(74, 144, 226, 0.90)',
+  'pakaian': 'rgba(233, 30, 99, 0.90)',
+  'arsitektur': 'rgba(156, 39, 176, 0.90)',
+  'kuliner': 'rgba(255, 87, 34, 0.90)',
+  'upacara': 'rgba(208, 2, 27, 0.90)',
+  'kerajinan': 'rgba(144, 19, 254, 0.90)',
+  'senjata': 'rgba(121, 85, 72, 0.90)',
+  'permainan': 'rgba(0, 188, 212, 0.90)',
+  'bahasa': 'rgba(76, 175, 80, 0.90)',
   'default': 'rgba(0, 169, 157, 0.90)',
-};
-
-const categories = ['all', 'Candi', 'Tarian', 'Kuliner', 'Musik', 'Pakaian', 'Arsitektur', 'Upacara', 'Kerajinan'];
-const categoryLabels: Record<string, string> = {
-  'all': 'Semua Kategori',
-  'Candi': 'Candi',
-  'Tarian': 'Tarian',
-  'Kuliner': 'Kuliner',
-  'Musik': 'Musik',
-  'Pakaian': 'Pakaian',
-  'Arsitektur': 'Arsitektur',
-  'Upacara': 'Upacara',
-  'Kerajinan': 'Kerajinan',
 };
 
 const difficulties = ['all', 'easy', 'medium', 'hard'];
@@ -67,12 +70,19 @@ const difficultyLabels: Record<string, string> = {
 
 const QuizGridSection = ({
   quizzes,
+  categories,
   loading,
   selectedCategory,
   setSelectedCategory,
   selectedDifficulty,
   setSelectedDifficulty,
 }: QuizGridSectionProps) => {
+  // Build category options
+  const categoryOptions = [
+    { label: 'Semua Kategori', value: 'all' },
+    ...categories.map(cat => ({ label: cat.name, value: cat.slug }))
+  ];
+
   return (
     <section className="w-full py-12 sm:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,11 +98,11 @@ const QuizGridSection = ({
           
           <div className="flex flex-wrap items-center gap-4">
             <FilterDropdown
-              options={categories.map(c => categoryLabels[c])}
-              selected={categoryLabels[selectedCategory]}
+              options={categoryOptions.map(c => c.label)}
+              selected={categoryOptions.find(c => c.value === selectedCategory)?.label || 'Semua Kategori'}
               onSelect={(label) => {
-                const key = Object.keys(categoryLabels).find(k => categoryLabels[k] === label) || 'all';
-                setSelectedCategory(key);
+                const option = categoryOptions.find(c => c.label === label);
+                setSelectedCategory(option?.value || 'all');
               }}
               placeholder="Semua Kategori"
             />
@@ -130,8 +140,8 @@ const QuizGridSection = ({
                   id: quiz.id,
                   title: quiz.title,
                   slug: quiz.slug,
-                  category: quiz.category || 'Umum',
-                  categoryColor: categoryColors[quiz.category || ''] || categoryColors['default'],
+                  category: quiz.category_rel?.name || 'Umum',
+                  categoryColor: categoryColors[quiz.category_rel?.slug || ''] || categoryColors['default'],
                   difficulty: (difficultyMap[quiz.difficulty] || 'Menengah') as 'Mudah' | 'Menengah' | 'Sulit',
                   duration: quiz.time_limit ? `${quiz.time_limit} Menit` : `${quiz.total_questions * 2} Menit`,
                   description: quiz.description || 'Uji pengetahuanmu tentang budaya Indonesia!',

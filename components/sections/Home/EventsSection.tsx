@@ -28,7 +28,7 @@ const EventsSection = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('/api/events?limit=6');
+        const response = await fetch('/api/events?limit=8');
         const data = await response.json();
         if (data.success) {
           setEvents(data.data);
@@ -44,7 +44,7 @@ const EventsSection = () => {
   }, []);
 
   const slidesCount = events.length;
-  const itemsPerView = 3;
+  const itemsPerView = 5;
   const maxSlide = Math.max(0, slidesCount - itemsPerView);
 
   const nextSlide = () => {
@@ -132,7 +132,7 @@ const EventsSection = () => {
           <div className="overflow-hidden">
             <motion.div 
               ref={sliderRef}
-              className="flex transition-transform duration-500 ease-out gap-6"
+              className="flex transition-transform duration-500 ease-out gap-6 py-5"
               style={{ transform: `translateX(-${currentSlide * (100 / itemsPerView)}%)` }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -146,7 +146,7 @@ const EventsSection = () => {
                   whileInView="visible"
                   viewport={{ once: true, margin: "-100px" }}
                   whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                  className="w-full sm:w-1/2 lg:w-1/3 shrink-0 flex flex-col rounded-2xl lg:rounded-4xl border border-[#E5E7EB] bg-white shadow-sm hover:shadow-xl transition-shadow"
+                  className="w-full sm:w-1/2 lg:w-[256px] shrink-0 flex flex-col rounded-2xl lg:rounded-4xl border border-[#E5E7EB] bg-white shadow-sm hover:shadow-xl transition-shadow"
                 >
                   <Link href={`/event-budaya/${event.slug}`} className="flex flex-col h-full">
                     <div className="relative h-60">
@@ -168,17 +168,19 @@ const EventsSection = () => {
                       </motion.div>
                     </div>
 
-                    <div className="flex flex-col gap-3 sm:gap-4 p-4 sm:p-5 flex-1">
-                      <h3 className="text-base font-bold leading-5 text-[#1A1A1A] line-clamp-2">
+                    <div className="flex flex-col p-2 sm:p-5 flex-1">
+                      <h3 className="line-clamp-1 mb-2 text-base font-bold leading-5 text-[#1A1A1A]">
                         {event.title}
                       </h3>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col ms-1">
+                        <div className="flex items-center gap-2 mb-2">
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M8 4V8L10.5 9.5" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12.6667 2.66675H3.33333C2.59695 2.66675 2 3.2637 2 4.00008V13.3334C2 14.0698 2.59695 14.6667 3.33333 14.6667H12.6667C13.403 14.6667 14 14.0698 14 13.3334V4.00008C14 3.2637 13.403 2.66675 12.6667 2.66675Z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M10.6667 1.33325V3.99992" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M5.33333 1.33325V3.99992" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 6.66675H14" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          <span className="text-sm font-medium text-[#6B7280]">
+                          <span className="text-sm text-[#6B7280]">
                             {formatDate(event.date, event.start_date, event.end_date)}
                           </span>
                         </div>
@@ -187,7 +189,7 @@ const EventsSection = () => {
                             <path d="M8 8.5C9.10457 8.5 10 7.60457 10 6.5C10 5.39543 9.10457 4.5 8 4.5C6.89543 4.5 6 5.39543 6 6.5C6 7.60457 6.89543 8.5 8 8.5Z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M8 14C10 12 13 9.65685 13 7C13 4.23858 10.7614 2 8 2C5.23858 2 3 4.23858 3 7C3 9.65685 6 12 8 14Z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          <span className="text-sm font-medium text-[#6B7280] line-clamp-1">
+                          <span className="text-sm text-[#6B7280] line-clamp-1">
                             {event.location}
                           </span>
                         </div>

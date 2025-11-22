@@ -7,11 +7,12 @@ const prisma = new PrismaClient();
 // GET - Get challenge by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const challenge = await prisma.challenge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!challenge) {
@@ -37,9 +38,10 @@ export async function GET(
 // PUT - Update challenge
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -69,7 +71,7 @@ export async function PUT(
     } = body;
     
     const existingChallenge = await prisma.challenge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!existingChallenge) {
@@ -80,7 +82,7 @@ export async function PUT(
     }
     
     const challenge = await prisma.challenge.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         title,
         description,
@@ -108,9 +110,10 @@ export async function PUT(
 // DELETE - Delete challenge
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -130,7 +133,7 @@ export async function DELETE(
     }
     
     const challenge = await prisma.challenge.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     if (!challenge) {
@@ -141,7 +144,7 @@ export async function DELETE(
     }
     
     await prisma.challenge.delete({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
     
     return NextResponse.json({

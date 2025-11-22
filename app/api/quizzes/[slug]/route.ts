@@ -22,7 +22,14 @@ export async function GET(
         slug: true,
         description: true,
         thumbnail: true,
-        category: true,
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+          }
+        },
         difficulty: true,
         time_limit: true,
         total_questions: true,

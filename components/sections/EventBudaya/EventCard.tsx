@@ -54,7 +54,7 @@ export default function EventCard({
       {/* Content */}
       <div className="p-5 flex flex-col gap-4">
         {/* Title */}
-        <h3 className="text-lg font-bold text-[#192A51] leading-tight min-h-[48px] line-clamp-2 transition-colors group-hover:text-[#D4A017]">
+        <h3 className="text-lg font-bold text-[#192A51] line-clamp-1 transition-colors group-hover:text-[#D4A017]">
           {title}
         </h3>
 

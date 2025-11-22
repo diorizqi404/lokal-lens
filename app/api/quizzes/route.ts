@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
         slug: true,
         description: true,
         thumbnail: true,
-        category: true,
         difficulty: true,
         time_limit: true,
         total_questions: true,
@@ -70,7 +69,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching quizzes:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch quizzes' },
+      { success: false, error: 'Failed to fetch quizzes' + error },
       { status: 500 }
     );
   }

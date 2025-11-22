@@ -7,9 +7,10 @@ const prisma = new PrismaClient();
 // GET - Get culture by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const culture = await prisma.culture.findUnique({
       where: { id: parseInt(params.id) },
       include: {
@@ -42,9 +43,10 @@ export async function GET(
 // PUT - Update culture
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -56,7 +58,7 @@ export async function PUT(
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -171,10 +173,11 @@ export async function PUT(
 // DELETE - Delete culture
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-        const token = request.cookies.get('auth_token')?.value;
+    const params = await context.params;
+    const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
     if (!token) {

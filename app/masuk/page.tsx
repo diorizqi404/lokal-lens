@@ -55,7 +55,7 @@ export default function AuthPage() {
 
       if (user.role === 'admin') {
         window.location.href = '/dashboard/admin';
-      } else if (user.role === 'officer') {
+      } else if (user.role === 'petugas') {
         window.location.href = '/dashboard/petugas';
       } else if (user.role === 'contributor') {
         window.location.href = '/dashboard/contributor';

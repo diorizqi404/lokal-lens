@@ -20,7 +20,7 @@ const CulturalShowcaseSection = () => {
   useEffect(() => {
     const fetchCultures = async () => {
       try {
-        const response = await fetch('/api/cultures?limit=4');
+        const response = await fetch('/api/cultures?limit=4&random=true');
         const data = await response.json();
         if (data.success) {
           setCultures(data.data);

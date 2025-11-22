@@ -31,6 +31,7 @@ model User {
   endangered_reports EndangeredReport[]      @relation("UserReports")
   reviewed_reports   EndangeredReport[]      @relation("ReviewedReports")
   scan_history       ScanHistory[]
+  contributor        Contributor?
 
   @@map("users")
 }
@@ -69,7 +70,7 @@ enum Role {
   user
   admin
   contributor
-  officer
+  petugas
 }
 
 model Badge {
@@ -156,6 +157,12 @@ enum ChallengeDifficulty {
   hard
 }
 
+enum ArticleStatus {
+  published
+  archive
+  draft
+}
+
 model Article {
   id             Int      @id @default(autoincrement())
   title          String
@@ -169,6 +176,7 @@ model Article {
   province       String? // Related province
   read_time      Int      @default(5) @map("read_time") // in minutes
   views          Int      @default(0)
+  status         ArticleStatus @default(published)
   is_highlight   Boolean  @default(false) @map("is_highlight")
   published_at   DateTime @default(now()) @map("published_at")
   created_at     DateTime @default(now()) @map("created_at")
@@ -252,7 +260,7 @@ model Culture {
   city             String // e.g., "Ponorogo"
   latitude         Float? // For map and nearby cultures
   longitude        Float? // For map and nearby cultures
-  status           CultureStatus    @default(active)
+  status           CultureStatus    @default(published)
   is_endangered    Boolean          @default(false) // Terancam Punah
   thumbnail        String? // Main image URL
   map_embed_url    String?          @db.Text // Google Maps embed URL
@@ -286,9 +294,9 @@ model CultureImage {
 }
 
 enum CultureStatus {
-  active
-  inactive
   draft
+  published
+  archive
 }
 
 // ============= CATEGORY MODEL =============
@@ -419,7 +427,7 @@ model QuizAnswer {
 enum QuizStatus {
   draft
   published
-  archived
+  archive
 }
 
 enum QuizDifficulty {
@@ -585,4 +593,31 @@ model ScanHistory {
   @@index([category_id])
   @@index([created_at])
   @@map("scan_history")
+}
+
+// ============= CONTRIBUTOR VERIFICATION MODELS =============
+
+model Contributor {
+  id                   Int                     @id @default(autoincrement())
+  user_id              Int                     @unique @map("user_id")
+  reason               String?                 @db.Text // Alasan ingin menjadi contributor
+  cultural_interest    String?                 @map("cultural_interest")
+  verification_status  VerificationStatus      @default(pending) @map("verification_status")
+  verified_by          Int?                    @map("verified_by") // Admin/Officer yang verifikasi
+  verified_at          DateTime?               @map("verified_at")
+  rejection_reason     String?                 @db.Text @map("rejection_reason")
+  created_at           DateTime                @default(now()) @map("created_at")
+  updated_at           DateTime                @updatedAt @map("updated_at")
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([verification_status])
+  @@index([created_at])
+  @@map("contributors")
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
 }

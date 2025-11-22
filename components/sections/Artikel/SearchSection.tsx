@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const categories = [
-  { id: 'semua', label: 'Semua' },
-  { id: 'Cerita Budaya', label: 'Cerita Budaya' },
-  { id: 'Tokoh Inspiratif', label: 'Tokoh Inspiratif' },
-  { id: 'Event Nasional', label: 'Event Nasional' },
-  { id: 'Upaya UNESCO', label: 'Upaya UNESCO' },
-];
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+}
 
 interface SearchSectionProps {
   currentCategory: string;
@@ -19,6 +18,27 @@ interface SearchSectionProps {
 
 const SearchSection = ({ currentCategory, currentSearch, onCategoryChange, onSearchChange }: SearchSectionProps) => {
   const [searchQuery, setSearchQuery] = useState(currentSearch);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Sync with URL params
   useEffect(() => {
@@ -55,19 +75,33 @@ const SearchSection = ({ currentCategory, currentSearch, onCategoryChange, onSea
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => onCategoryChange(category.id)}
-              className={`px-4 py-3 rounded-full font-noto text-sm leading-[21px] transition-all whitespace-nowrap ${
-                currentCategory === category.id
-                  ? 'bg-[rgba(193,163,111,0.20)] text-[#C1A36F] font-bold'
-                  : 'bg-[rgba(181,181,181,0.30)] text-[#333] font-medium hover:bg-[rgba(181,181,181,0.40)]'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
+          <button
+            onClick={() => onCategoryChange('semua')}
+            className={`px-4 py-3 rounded-full font-noto text-sm leading-[21px] transition-all whitespace-nowrap ${
+              currentCategory === 'semua'
+                ? 'bg-[rgba(193,163,111,0.20)] text-[#C1A36F] font-bold'
+                : 'bg-[rgba(181,181,181,0.30)] text-[#333] font-medium hover:bg-[rgba(181,181,181,0.40)]'
+            }`}
+          >
+            Semua
+          </button>
+          {loadingCategories ? (
+            <div className="px-4 py-3 text-sm text-gray-500">Memuat kategori...</div>
+          ) : (
+            categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => onCategoryChange(category.slug)}
+                className={`px-4 py-3 rounded-full font-noto text-sm leading-[21px] transition-all whitespace-nowrap ${
+                  currentCategory === category.slug
+                    ? 'bg-[rgba(193,163,111,0.20)] text-[#C1A36F] font-bold'
+                    : 'bg-[rgba(181,181,181,0.30)] text-[#333] font-medium hover:bg-[rgba(181,181,181,0.40)]'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))
+          )}
         </div>
       </div>
     </section>

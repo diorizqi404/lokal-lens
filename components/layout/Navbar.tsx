@@ -71,7 +71,7 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
             </a>
             
             {/* Desktop Navigation (lg and above) */}
-            <div className="hidden md:flex items-center gap-5 ml-8 2xl:ml-[98px]">
+            <div className="hidden md:flex items-center gap-5 ml-8 2xl:ml-[80px]">
               <div 
                 ref={dropdownRef}
                 className="relative"
@@ -168,13 +168,13 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
             {user ? (
             <div
               ref={profileDropdownRef}
-              className="relative"
+              className="relative w-[150px]"
             >
               <div
                 className="flex items-center gap-3 px-2 py-1.5 hover:bg-gray-50 rounded-full transition-colors cursor-pointer"
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
               >
-                <span className="text-sm font-medium text-[#111813] whitespace-nowrap hidden xl:block">
+                <span className="text-sm line-clamp-1 font-medium text-[#111813] whitespace-nowrap hidden xl:block">
                   Hi! {user.name}
                 </span>
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -192,6 +192,17 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
               {/* Profile Dropdown */}
               {isProfileDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-[180px] bg-white border border-gray-100 rounded-lg shadow-lg py-2 z-50">
+                  {(user.role === 'admin' || user.role === 'petugas' || user.role === 'contributor') && (
+                    <a
+                      href={`/dashboard/${user.role}`}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#111813] hover:bg-gray-50 transition-colors"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="#111813"/>
+                      </svg>
+                      Dashboard
+                    </a>
+                  )}
                   <a
                     href="/profil"
                     className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#111813] hover:bg-gray-50 transition-colors"
@@ -278,6 +289,17 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
               {/* Profile Dropdown - Simplified */}
               {isProfileDropdownOpenSimplified && (
                 <div className="absolute top-full right-0 mt-2 w-[180px] bg-white border border-gray-100 rounded-lg shadow-lg py-2 z-50">
+                  {(user.role === 'admin' || user.role === 'petugas' || user.role === 'contributor') && (
+                    <a
+                      href={`/dashboard/${user.role}`}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#111813] hover:bg-gray-50 transition-colors"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="#111813"/>
+                      </svg>
+                      Dashboard
+                    </a>
+                  )}
                   <a
                     href="/profil"
                     className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#111813] hover:bg-gray-50 transition-colors"
@@ -438,26 +460,39 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                 </div>
 
                 {/* Mobile Profile Actions */}
-                <div className="flex gap-2">
-                  <a
-                    href="/profil"
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#111813"/>
-                    </svg>
-                    <span className="text-sm font-bold text-[#111813]">Profil</span>
-                  </a>
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#C0392B"/>
-                    </svg>
-                    <span className="text-sm font-bold text-[#C0392B]">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-                  </button>
+                <div className="flex flex-col gap-2">
+                  {(user.role === 'admin' || user.role === 'petugas' || user.role === 'contributor') && (
+                    <a
+                      href={`/dashboard/${user.role}`}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="#111813"/>
+                      </svg>
+                      <span className="text-sm font-bold text-[#111813]">Dashboard</span>
+                    </a>
+                  )}
+                  <div className="flex gap-2">
+                    <a
+                      href="/profil"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#111813"/>
+                      </svg>
+                      <span className="text-sm font-bold text-[#111813]">Profil</span>
+                    </a>
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#C0392B"/>
+                      </svg>
+                      <span className="text-sm font-bold text-[#C0392B]">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
               ) : (

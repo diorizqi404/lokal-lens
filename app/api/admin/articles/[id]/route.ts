@@ -7,9 +7,10 @@ const prisma = new PrismaClient();
 // GET - Get article by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const article = await prisma.article.findUnique({
       where: { id: parseInt(params.id) },
       include: {
@@ -46,9 +47,10 @@ export async function GET(
 // PUT - Update article
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     
@@ -74,7 +76,7 @@ export async function PUT(
       excerpt,
       content,
       featured_image,
-      category,
+      category_id,
       tags,
       province,
       read_time,
@@ -114,7 +116,7 @@ export async function PUT(
         excerpt,
         content,
         featured_image,
-        category,
+        category_id,
         tags,
         province,
         read_time,
@@ -127,7 +129,8 @@ export async function PUT(
             full_name: true,
             email: true
           }
-        }
+        },
+        category_rel: true
       }
     });
     
@@ -148,9 +151,10 @@ export async function PUT(
 // DELETE - Delete article
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const token = request.cookies.get('auth_token')?.value;
     const role = request.cookies.get('user_role')?.value;
     

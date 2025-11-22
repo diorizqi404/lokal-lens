@@ -7,15 +7,28 @@ const prisma = new PrismaClient();
 // GET - Get quiz by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const quiz = await prisma.quiz.findUnique({
       where: { id: parseInt(params.id) },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         questions: {
           include: {
-            options: true
+            options: {
+              orderBy: {
+                order_number: 'asc'
+              }
+            }
           },
           orderBy: { order_number: 'asc' }
         }
@@ -45,10 +58,12 @@ export async function GET(
 // PUT - Update quiz
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const params = await context.params;
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -58,7 +73,7 @@ export async function PUT(
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -71,7 +86,7 @@ export async function PUT(
       slug,
       description,
       thumbnail,
-      category,
+      category_id,
       difficulty,
       time_limit,
       status,
@@ -117,7 +132,7 @@ export async function PUT(
         slug,
         description,
         thumbnail,
-        category,
+        category_id: category_id || null,
         difficulty,
         time_limit,
         status,
@@ -140,9 +155,24 @@ export async function PUT(
         } : undefined
       },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         questions: {
           include: {
-            options: true
+            options: {
+              orderBy: {
+                order_number: 'asc'
+              }
+            }
+          },
+          orderBy: {
+            order_number: 'asc'
           }
         }
       }
@@ -165,10 +195,12 @@ export async function PUT(
 // DELETE - Delete quiz
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const params = await context.params;
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -178,7 +210,7 @@ export async function DELETE(
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || decoded.role !== 'admin') {
+    if (!decoded || role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden - Admin only' },
         { status: 403 }

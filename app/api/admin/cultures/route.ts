@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new culture
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
     
     const decoded = verifyToken(token);
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }

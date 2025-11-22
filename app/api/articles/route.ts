@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: any = {
+      status: 'published', // Only show published articles by default
+    };
 
     // Lookup category by slug if provided
     if (category && category !== 'semua') {
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               full_name: true,
+              email: true,
               profile: {
                 select: {
                   avatar: true,

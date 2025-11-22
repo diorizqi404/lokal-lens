@@ -1,5 +1,7 @@
 'use client';
 
+import { motion } from 'framer-motion';
+
 interface DashboardCardProps {
   title: string;
   value: string | number;
@@ -27,7 +29,13 @@ export default function DashboardCard({
   color = 'green' 
 }: DashboardCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)' }}
+      className="bg-white rounded-2xl h-full p-6 shadow-sm border border-gray-100 transition-all"
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
@@ -58,6 +66,6 @@ export default function DashboardCard({
           {icon}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

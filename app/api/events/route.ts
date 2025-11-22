@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
           location_province: true,
           price: true,
           status: true,
-          category: true,
           views: true,
           category_rel: {
             select: {
@@ -144,7 +143,7 @@ export async function GET(request: NextRequest) {
         image: event.thumbnail || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&auto=format&fit=crop&q=60',
         status: statusText,
         statusColor: statusColor,
-        category: event.category_rel?.name || event.category,
+        category: event.category_rel?.name,
         categorySlug: event.category_rel?.slug,
         categoryIcon: event.category_rel?.icon,
         views: event.views,

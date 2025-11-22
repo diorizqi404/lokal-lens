@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const province = searchParams.get('province') || '';
     const category = searchParams.get('category') || '';
-    const status = searchParams.get('status') || 'active';
+    const status = searchParams.get('status') || 'published';
+    const random = searchParams.get('random') === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -44,8 +45,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get cultures with pagination
-    const [cultures, total] = await Promise.all([
-      prisma.culture.findMany({
+    let cultures;
+    let total;
+
+    if (random) {
+      // For random selection, get all matching records first
+      const allCultures = await prisma.culture.findMany({
         where,
         include: {
           images: {
@@ -61,14 +66,40 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: {
-          created_at: 'desc',
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.culture.count({ where }),
-    ]);
+      });
+      
+      // Shuffle and take limit
+      const shuffled = allCultures.sort(() => Math.random() - 0.5);
+      cultures = shuffled.slice(0, limit);
+      total = allCultures.length;
+    } else {
+      // Normal pagination
+      [cultures, total] = await Promise.all([
+        prisma.culture.findMany({
+          where,
+          include: {
+            images: {
+              where: { is_primary: true },
+              take: 1,
+            },
+            category_rel: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+              },
+            },
+          },
+          orderBy: {
+            created_at: 'desc',
+          },
+          skip,
+          take: limit,
+        }),
+        prisma.culture.count({ where }),
+      ]);
+    }
 
     // Format response
     const formattedCultures = cultures.map((culture: any) => ({

@@ -34,9 +34,24 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         include: {
+          category_rel: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true
+            }
+          },
           questions: {
             include: {
-              options: true
+              options: {
+                orderBy: {
+                  order_number: 'asc'
+                }
+              }
+            },
+            orderBy: {
+              order_number: 'asc'
             }
           }
         },
@@ -67,7 +82,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new quiz
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('auth_token')?.value;
+    const role = request.cookies.get('user_role')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
     
     const decoded = verifyToken(token) as any;
-    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'contributor')) {
+    if (!decoded || (role !== 'admin' && role !== 'contributor')) {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -90,7 +106,7 @@ export async function POST(request: NextRequest) {
       slug,
       description,
       thumbnail,
-      category,
+      category_id,
       difficulty,
       time_limit,
       status,
@@ -115,7 +131,7 @@ export async function POST(request: NextRequest) {
         slug,
         description,
         thumbnail,
-        category,
+        category_id: category_id || null,
         difficulty: difficulty || 'medium',
         time_limit,
         status: status || 'draft',
@@ -138,9 +154,24 @@ export async function POST(request: NextRequest) {
         } : undefined
       },
       include: {
+        category_rel: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        },
         questions: {
           include: {
-            options: true
+            options: {
+              orderBy: {
+                order_number: 'asc'
+              }
+            }
+          },
+          orderBy: {
+            order_number: 'asc'
           }
         }
       }

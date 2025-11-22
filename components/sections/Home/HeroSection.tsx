@@ -3,8 +3,27 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 const HeroSection = () => {
+  const [cultureCount, setCultureCount] = useState(0);
+
+  useEffect(() => {
+    fetchCultureCount();
+  }, []);
+
+  const fetchCultureCount = async () => {
+    try {
+      const response = await fetch('/api/cultures?limit=1');
+      const data = await response.json();
+      if (data.success && data.pagination) {
+        setCultureCount(data.pagination.total);
+      }
+    } catch (error) {
+      console.error('Error fetching culture count:', error);
+    }
+  };
+
   return (
     <section className="w-full px-4 sm:px-6 lg:px-[87px] mt-8 sm:mt-12 lg:mt-[69px]">
       <motion.div 
@@ -82,7 +101,7 @@ const HeroSection = () => {
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.5, delay: 1.2 }}
               >
-                +1200
+                {cultureCount > 0 ? `+${cultureCount.toLocaleString()}` : '+1200'}
               </motion.span>
             </motion.div>
           </motion.div>
