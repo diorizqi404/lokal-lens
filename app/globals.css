@@ -20,6 +20,10 @@
   button {
     cursor: pointer;
   }
+
+  .swiper-wrapper {
+    padding: 20px 0;
+  }
 }
 
 @layer utilities {

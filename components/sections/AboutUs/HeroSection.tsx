@@ -7,7 +7,7 @@ const HeroSection = () => {
     <section 
       className="relative w-full h-[603px] flex items-center justify-center"
       style={{
-        background: "linear-gradient(180deg, rgba(74, 44, 42, 0.40) 0%, rgba(74, 44, 42, 0.70) 100%), url('https://api.builder.io/api/v1/image/assets/TEMP/f3553c731f0df019e9fb0c63e094a7e6304ec0e2?width=2904') lightgray 0px -502.5px / 100% 266.667% no-repeat",
+        background: "linear-gradient(180deg, rgba(74, 44, 42, 0.40) 0%, rgba(74, 44, 42, 0.70) 100%), url('/assets/img/tentang-kami/hero.png') lightgray 0px -502.5px / 100% 266.667% no-repeat",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}

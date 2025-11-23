@@ -12,44 +12,48 @@ export default function ArtikelPage() {
   const searchParams = useSearchParams();
 
   // Get URL params
-  const currentPage = parseInt(searchParams.get('page') || '1');
+  const currentPage = parseInt(searchParams.get('page') || '1', 10) || 1;
   const currentCategory = searchParams.get('category') || 'semua';
   const currentSearch = searchParams.get('search') || '';
 
   // Update URL with new params
   const updateUrlParams = useCallback((updates: { page?: number; category?: string; search?: string }) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
+    // Build params from the current location to ensure we preserve any external params
+    const baseParams = typeof window !== 'undefined'
+      ? new URL(window.location.href).searchParams
+      : new URLSearchParams(searchParams.toString());
+
+    const params = new URLSearchParams(baseParams.toString());
+
+    // Page handling
     if (updates.page !== undefined) {
-      if (updates.page === 1) {
-        params.delete('page');
-      } else {
-        params.set('page', updates.page.toString());
-      }
+      if (updates.page === 1) params.delete('page');
+      else params.set('page', updates.page.toString());
     }
-    
+
+    // Category handling — reset page to 1
     if (updates.category !== undefined) {
-      if (updates.category === 'semua') {
-        params.delete('category');
-      } else {
-        params.set('category', updates.category);
-      }
-      // Reset to page 1 when changing filters
+      if (updates.category === 'semua') params.delete('category');
+      else params.set('category', updates.category);
       params.delete('page');
     }
-    
+
+    // Search handling — reset page to 1
     if (updates.search !== undefined) {
-      if (updates.search === '') {
-        params.delete('search');
-      } else {
-        params.set('search', updates.search);
-      }
-      // Reset to page 1 when searching
+      if (updates.search === '') params.delete('search');
+      else params.set('search', updates.search);
       params.delete('page');
     }
 
     const queryString = params.toString();
-    router.push(`/artikel${queryString ? '?' + queryString : ''}`, { scroll: false });
+    const url = `/artikel${queryString ? '?' + queryString : ''}`;
+
+    // Use replace for filter/search updates to avoid history spam; push for page changes
+    if (updates.page !== undefined) {
+      router.push(url);
+    } else {
+      router.replace(url);
+    }
   }, [searchParams, router]);
 
   return (

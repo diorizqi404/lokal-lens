@@ -57,7 +57,7 @@ const ChallengeAndSolutionSection = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <motion.img 
-              src="https://api.builder.io/api/v1/image/assets/TEMP/4f933ce487a9a398618856c196f6882888fed6b2?width=896" 
+              src="/assets/img/tentang-kami/2.png" 
               alt="Cultural challenge illustration"
               className="w-full h-auto rounded-[32px] object-cover aspect-square"
               whileHover={{ scale: 1.05, rotate: 2 }}
@@ -75,8 +75,8 @@ const ChallengeAndSolutionSection = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <motion.img 
-              src="https://api.builder.io/api/v1/image/assets/TEMP/9034e3c65c1fe61fb563e371bff50ae5bd0169f7?width=896" 
-              alt="Cultural solution illustration"
+                  src="/assets/img/tentang-kami/1.png" 
+                  alt="Cultural solution illustration"
               className="w-full h-auto rounded-[32px] object-cover aspect-square"
               whileHover={{ scale: 1.05, rotate: -2 }}
               transition={{ duration: 0.3 }}
