@@ -33,6 +33,7 @@ export default function QuizMulaiPage({ params }: { params: Promise<{ id: string
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [score, setScore] = useState(0);
   const [feedbackData, setFeedbackData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -87,9 +88,10 @@ export default function QuizMulaiPage({ params }: { params: Promise<{ id: string
   };
 
   const handleAnswerSelect = async (optionId: number) => {
-    if (showFeedback || !attemptId) return;
+    if (showFeedback || !attemptId || submitting) return;
 
     setSelectedAnswer(optionId);
+    setSubmitting(true);
 
     try {
       const response = await fetch(`/api/quizzes/attempts/${attemptId}/answer`, {
@@ -112,6 +114,8 @@ export default function QuizMulaiPage({ params }: { params: Promise<{ id: string
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -194,6 +198,7 @@ export default function QuizMulaiPage({ params }: { params: Promise<{ id: string
             correctAnswer={feedbackData ? currentQuestion.options.findIndex(opt => opt.id === feedbackData.correctOptionId) : null}
             showFeedback={showFeedback}
             onSelect={(index) => handleAnswerSelect(currentQuestion.options[index].id)}
+            submitting={submitting}
           />
         </div>
 

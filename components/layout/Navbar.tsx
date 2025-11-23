@@ -170,11 +170,11 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
               ref={profileDropdownRef}
               className="relative w-[150px]"
             >
-              <div
+                <div
                 className="flex items-center gap-3 px-2 py-1.5 hover:bg-gray-50 rounded-full transition-colors cursor-pointer"
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
               >
-                <span className="text-sm line-clamp-1 font-medium text-[#111813] whitespace-nowrap hidden xl:block">
+                <span title={user.name} className="text-sm line-clamp-1 font-medium text-[#111813] max-w-40 truncate hidden xl:block">
                   Hi! {user.name}
                 </span>
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -281,8 +281,8 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                     }}
                   />
                 </div>
-                <span className="text-sm font-medium text-[#111813] whitespace-nowrap">
-                  {/* {user.name.split(' ')[0]} {user.name.split(' ')[1]?.charAt(0) || ''} */}
+                <span title={user.name} className="text-sm font-medium text-[#111813] max-w-[120px] truncate">
+                  {user.name}
                 </span>
               </div>
 
@@ -450,7 +450,7 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                     />
                   </div>
                   <div className="flex-1">
-                    <p className="text-base font-bold text-[#111813]">
+                    <p title={user.name} className="text-base font-bold text-[#111813] truncate">
                       {user.name}
                     </p>
                     <p className="text-sm text-gray-600">

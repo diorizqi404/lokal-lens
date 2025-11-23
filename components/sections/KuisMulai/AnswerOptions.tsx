@@ -8,6 +8,7 @@ interface AnswerOptionsProps {
   correctAnswer: number | null;
   showFeedback: boolean;
   onSelect: (index: number) => void;
+  submitting?: boolean;
 }
 
 export default function AnswerOptions({ 
@@ -15,7 +16,8 @@ export default function AnswerOptions({
   selectedAnswer, 
   correctAnswer, 
   showFeedback, 
-  onSelect 
+  onSelect,
+  submitting = false
 }: AnswerOptionsProps) {
   const getButtonStyle = (index: number) => {
     if (!showFeedback || correctAnswer === null) {
@@ -41,9 +43,9 @@ export default function AnswerOptions({
         <motion.button
           key={index}
           onClick={() => onSelect(index)}
-          disabled={showFeedback}
+          disabled={showFeedback || submitting}
           className={`
-            min-h-[56px] px-5 py-3 rounded-3xl font-bold text-base leading-6 tracking-[0.24px]
+            min-h-14 px-5 py-3 rounded-3xl font-bold text-base leading-6 tracking-[0.24px]
             transition-all duration-300 disabled:cursor-not-allowed
             ${getButtonStyle(index)}
           `}
@@ -53,7 +55,12 @@ export default function AnswerOptions({
           whileHover={!showFeedback ? { scale: 1.02 } : {}}
           whileTap={!showFeedback ? { scale: 0.98 } : {}}
         >
-          {option}
+          <div className="flex items-center justify-center gap-3">
+            {submitting && selectedAnswer === index && !showFeedback && (
+              <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            )}
+            <span>{option}</span>
+          </div>
         </motion.button>
       ))}
     </div>

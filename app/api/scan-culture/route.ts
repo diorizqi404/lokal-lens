@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "@/lib/prisma";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
 // Helper function to extract object type from name
 function extractObjectType(name: string): string {
@@ -58,6 +60,34 @@ function getCategoryFromObjectType(objectType: string): string | undefined {
   };
 
   return categoryMap[objectType.toLowerCase()];
+}
+
+// Helper function to save image to disk
+async function saveImageToDisk(base64Image: string, fileName: string): Promise<string> {
+  try {
+    // Remove data URL prefix if present
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Create uploads directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'scans');
+    await mkdir(uploadDir, { recursive: true });
+    
+    // Generate unique filename with timestamp
+    const timestamp = Date.now();
+    const fileExtension = 'jpg'; // Default to jpg
+    const uniqueFileName = `${fileName}-${timestamp}.${fileExtension}`;
+    const filePath = path.join(uploadDir, uniqueFileName);
+    
+    // Write file to disk
+    await writeFile(filePath, buffer);
+    
+    // Return public URL path
+    return `/uploads/scans/${uniqueFileName}`;
+  } catch (error) {
+    console.error("Error saving image:", error);
+    throw error;
+  }
 }
 
 export async function POST(req: Request) {
@@ -195,6 +225,24 @@ PENTING:
                           scanResult.location !== "Tidak Diketahui" &&
                           scanResult.location.toLowerCase().includes("indonesia");
 
+    // Simpan gambar scan user jika valid
+    let savedImagePath = null;
+    if (isValidCulture) {
+      try {
+        const sanitizedName = scanResult.name
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 50); // Limit filename length
+        
+        savedImagePath = await saveImageToDisk(image, sanitizedName);
+        console.log("Image saved successfully:", savedImagePath);
+      } catch (imageError) {
+        console.error("Failed to save image:", imageError);
+        // Continue even if image save fails
+      }
+    }
+
     // Hanya simpan ke database jika objek adalah budaya Indonesia yang valid
     if (isValidCulture) {
       try {
@@ -236,13 +284,62 @@ PENTING:
               city: scanResult.location?.split(',')[0]?.trim() || "",
               status: 'published',
               is_endangered: scanResult.rarity === "Sangat Langka",
-              thumbnail: scanResult.image || null,
+              thumbnail: savedImagePath, // Simpan gambar scan user sebagai thumbnail
             }
           });
           cultureId = newCulture.id;
+
+          // Simpan gambar referensi dari internet ke culture_images
+          if (scanResult.image && scanResult.image !== "") {
+            try {
+              await prisma.cultureImage.create({
+                data: {
+                  culture_id: cultureId,
+                  image_url: scanResult.image,
+                  alt_text: `Referensi ${scanResult.name}`,
+                  is_primary: false,
+                }
+              });
+            } catch (imageError) {
+              console.error("Failed to save reference image:", imageError);
+            }
+          }
+        } else {
+          // Jika culture sudah ada, update thumbnail dengan gambar scan terbaru
+          await prisma.culture.update({
+            where: { id: existingCulture.id },
+            data: {
+              thumbnail: savedImagePath,
+            }
+          });
+
+          // Simpan gambar referensi jika ada dan belum ada di culture_images
+          if (scanResult.image && scanResult.image !== "") {
+            const existingImage = await prisma.cultureImage.findFirst({
+              where: {
+                culture_id: existingCulture.id,
+                image_url: scanResult.image,
+              }
+            });
+
+            if (!existingImage) {
+              try {
+                await prisma.cultureImage.create({
+                  data: {
+                    culture_id: existingCulture.id,
+                    image_url: scanResult.image,
+                    alt_text: `Referensi ${scanResult.name}`,
+                    is_primary: false,
+                  }
+                });
+              } catch (imageError) {
+                console.error("Failed to save reference image:", imageError);
+              }
+            }
+          }
         }
 
-        // Simpan scan history dengan category_id
+        // Simpan scan history
         await prisma.scanHistory.create({
           data: {
             culture_id: cultureId,
@@ -264,7 +361,13 @@ PENTING:
       console.log("Objek bukan budaya Indonesia yang valid, tidak disimpan ke database:", scanResult.name);
     }
 
-    return NextResponse.json(scanResult);
+    // Tambahkan path gambar yang disimpan ke response
+    const responseData = {
+      ...scanResult,
+      scanned_image: savedImagePath,
+    };
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("SERVER ERROR:", error);
     return NextResponse.json(

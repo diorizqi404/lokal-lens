@@ -2,9 +2,10 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 interface SpotlightSectionProps {
-  location?: string;
+  location?: string; // optional location string like "Jawa Tengah, Indonesia"
 }
 
 // Database budaya terkenal per provinsi
@@ -83,13 +84,102 @@ const culturalDatabase: Record<string, Array<{title: string, description: string
 
 const SpotlightSection = ({ location }: SpotlightSectionProps) => {
   // Extract province from location string (e.g., "Jawa Tengah, Indonesia" -> "Jawa Tengah")
-  const extractProvince = (loc?: string) => {
-    if (!loc) return 'Jawa Tengah'; // default
+  const extractProvinceFromString = (loc?: string) => {
+    if (!loc) return undefined;
     const parts = loc.split(',');
     return parts[0].trim();
   };
 
-  const province = extractProvince(location);
+  const [detectedProvince, setDetectedProvince] = useState<string | undefined>(undefined);
+  const [detecting, setDetecting] = useState(false);
+  const [permissionState, setPermissionState] = useState<string | undefined>(undefined);
+
+  // Priority: prop `location` -> detectedProvince -> default
+  const province = extractProvinceFromString(location) || detectedProvince || 'Jawa Tengah';
+
+  // Helper to request geolocation and reverse-geocode
+  const requestAndDetect = () => {
+    if (!('geolocation' in navigator)) return;
+
+    let aborted = false;
+    const controller = new AbortController();
+
+    setDetecting(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        if (aborted) return;
+        const { latitude, longitude } = pos.coords;
+
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error('geocode-failed');
+          const json = await res.json();
+
+          const addr = json.address || {};
+          const candidate = addr.state || addr.county || addr.region || addr.province || addr.state_district;
+
+          if (candidate && !aborted) setDetectedProvince(String(candidate));
+        } catch (e) {
+          // ignore errors
+        } finally {
+          if (!aborted) setDetecting(false);
+        }
+      },
+      (err) => {
+        setDetecting(false);
+      },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 8000 }
+    );
+
+    return () => {
+      aborted = true;
+      controller.abort();
+    };
+  };
+
+  // Attempt to detect user's province via permissions + geolocation
+  useEffect(() => {
+    if (location) return; // if parent provided location, prefer that
+
+    if (!('geolocation' in navigator)) {
+      setPermissionState('unsupported');
+      return;
+    }
+
+    // Check permission state if available
+    try {
+      const perms = (navigator as any).permissions;
+      if (perms && typeof perms.query === 'function') {
+        perms.query({ name: 'geolocation' }).then((p: any) => {
+          setPermissionState(p.state);
+          // If granted, start detection immediately. If prompt, we won't auto-trigger but user can click.
+          if (p.state === 'granted') requestAndDetect();
+          p.onchange = () => setPermissionState(p.state);
+        }).catch(() => {
+          // permissions API failed — try to request once
+          requestAndDetect();
+        });
+      } else {
+        // Permissions API not available - attempt geolocation (this will prompt)
+        requestAndDetect();
+      }
+    } catch (e) {
+      requestAndDetect();
+    }
+  }, [location]);
+
+  const handleRetryLocation = () => {
+    // re-check permission & try to request location again
+    requestAndDetect();
+    try {
+      const perms = (navigator as any).permissions;
+      if (perms && typeof perms.query === 'function') {
+        perms.query({ name: 'geolocation' }).then((p: any) => setPermissionState(p.state)).catch(() => {});
+      }
+    } catch {}
+  };
   const allItems = culturalDatabase[province] || culturalDatabase['Jawa Tengah'];
   
   // Get 3 random famous items from the same province
@@ -109,7 +199,7 @@ const SpotlightSection = ({ location }: SpotlightSectionProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
         >
-          <svg width="30" height="36" viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-8 sm:w-[30px] sm:h-9 flex-shrink-0">
+          <svg width="30" height="36" viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-8 sm:w-[30px] sm:h-9 shrink-0">
             <path d="M15.834 9.5L14.7923 7.20833L12.5007 6.16667L14.7923 5.125L15.834 2.83333L16.8757 5.125L19.1673 6.16667L16.8757 7.20833L15.834 9.5ZM15.834 21.1667L14.7923 18.875L12.5007 17.8333L14.7923 16.7917L15.834 14.5L16.8757 16.7917L19.1673 17.8333L16.8757 18.875L15.834 21.1667ZM7.50065 18.6667L5.41732 14.0833L0.833984 12L5.41732 9.91667L7.50065 5.33333L9.58398 9.91667L14.1673 12L9.58398 14.0833L7.50065 18.6667ZM7.50065 14.625L8.33398 12.8333L10.1257 12L8.33398 11.1667L7.50065 9.375L6.66732 11.1667L4.87565 12L6.66732 12.8333L7.50065 14.625Z" fill="#D4A017"/>
           </svg>
           <div className="flex-1">
@@ -117,7 +207,7 @@ const SpotlightSection = ({ location }: SpotlightSectionProps) => {
               Spotlight Budaya Terdekat
             </h3>
             <p className="text-xs sm:text-sm font-normal leading-5 text-[#666]">
-              Temukan budaya lain di {province}
+              Temukan budaya lain di {province == 'Tidak Diketahui' ? 'seluruh Indonesia' : province}
             </p>
           </div>
         </motion.div>
@@ -133,7 +223,7 @@ const SpotlightSection = ({ location }: SpotlightSectionProps) => {
               whileHover={{ x: 5 }}
             >
               <motion.div 
-                className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0"
+                className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden shrink-0"
                 whileHover={{ scale: 1.1 }}
                 transition={{ duration: 0.3 }}
               >
@@ -158,7 +248,7 @@ const SpotlightSection = ({ location }: SpotlightSectionProps) => {
                 viewBox="0 0 25 28" 
                 fill="none" 
                 xmlns="http://www.w3.org/2000/svg" 
-                className="w-5 h-6 sm:w-6 sm:h-7 flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors"
+                className="w-5 h-6 sm:w-6 sm:h-7 shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors"
                 whileHover={{ x: 5 }}
               >
                 <path d="M12.5933 14L8.12109 9.52776L9.4822 8.16665L15.3155 14L9.4822 19.8333L8.12109 18.4722L12.5933 14Z" fill="currentColor"/>

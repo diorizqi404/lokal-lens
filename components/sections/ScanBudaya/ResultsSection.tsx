@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 interface ResultData {
   name: string;
@@ -67,6 +68,33 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
   };
 
   const displayData = data || defaultData;
+  const router = useRouter();
+
+  // Click handlers: navigate only when `data` exists and is recognized as culture
+  const handleViewDetail = () => {
+    if (!data) return;
+    if (isNotRecognized(data)) return;
+
+    const slug = (data.name || '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '');
+
+    if (slug) router.push(`/jelajahi/${slug}`);
+  };
+
+  const handleViewMap = () => {
+    if (!data) return;
+    if (isNotRecognized(data)) return;
+
+    const slug = (data.name || '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '');
+
+    // `peta-budaya` is a single page; pass slug as query param so map can center on the culture
+    if (slug) router.push(`/peta-budaya?slug=${encodeURIComponent(slug)}`);
+  };
   
   const getRarityColor = (rarity: string) => {
     if (rarity.includes('Sangat Langka')) return 'bg-[#FEE2E2]';
@@ -81,11 +109,11 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
   };
 
   const getUnescoColor = (unesco: string) => {
-    return unesco.includes('Terdaftar') ? 'bg-[#DBEAFE]' : 'bg-[#F3F4F6]';
+    return unesco.includes('Tidak') ? 'bg-[#F3F4F6]' : 'bg-[#DBEAFE]';
   };
 
   const getUnescoTextColor = (unesco: string) => {
-    return unesco.includes('Terdaftar') ? 'text-[#1E40AF]' : 'text-[#4B5563]';
+    return unesco.includes('Tidak') ? 'text-[#4B5563]' : 'text-[#1E40AF]';
   };
 
   if (isLoading) {
@@ -133,7 +161,7 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
               transition={{ duration: 0.3 }}
             >
               {isNotRecognized(data) ? (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200">
                   <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -258,6 +286,7 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
             transition={{ duration: 0.5, delay: 0.9 }}
           >
             <motion.button 
+              onClick={handleViewMap}
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[rgba(19,236,236,0.2)] hover:bg-[rgba(19,236,236,0.3)] transition-all flex-1 sm:flex-initial"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -271,6 +300,7 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
             </motion.button>
 
             <motion.button 
+              onClick={handleViewDetail}
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[rgba(19,236,236,0.2)] hover:bg-[rgba(19,236,236,0.3)] transition-all flex-1 sm:flex-initial"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

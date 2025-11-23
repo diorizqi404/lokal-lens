@@ -101,7 +101,7 @@ const HeroSection = () => {
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.5, delay: 1.2 }}
               >
-                {cultureCount > 0 ? `+${cultureCount.toLocaleString()}` : '+1200'}
+                {cultureCount > 1000 ? `+${cultureCount.toLocaleString()}` : '+1200'}
               </motion.span>
             </motion.div>
           </motion.div>
