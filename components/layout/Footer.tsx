@@ -56,6 +56,9 @@ const Footer = () => {
                 <a href="#" className="text-sm font-normal leading-5 text-[#A19886] hover:text-[#F8F7F5] transition-colors">
                   Kebijakan Privasi
                 </a>
+                <a href="/bergabung" className="text-sm font-normal leading-5 text-[#A19886] hover:text-[#F8F7F5] transition-colors">
+                  Bergabung Sebagai Kontributor
+                </a>
               </div>
             </div>
 

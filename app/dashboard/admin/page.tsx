@@ -184,7 +184,7 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+        className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100"
       >
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">⚡</span>
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <span className="text-2xl">📈</span>
@@ -279,7 +279,7 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <span className="text-2xl">📊</span>

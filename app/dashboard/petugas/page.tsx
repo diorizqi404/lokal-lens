@@ -201,7 +201,7 @@ export default function PetugasDashboard() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Waktu Respons Rata-rata</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -212,7 +212,7 @@ export default function PetugasDashboard() {
           <p className="text-sm text-gray-500 mt-2">Dari laporan hingga review</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Performa Minggu Ini</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,7 +230,7 @@ export default function PetugasDashboard() {
           <p className="text-sm text-gray-500 mt-2">Laporan yang direview</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Konten Pending</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,7 +253,7 @@ export default function PetugasDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+        className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200"
       >
         <h2 className="text-xl font-bold text-gray-800 mb-6">Statistik 7 Hari Terakhir</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -288,7 +288,7 @@ export default function PetugasDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.7 }}
-        className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+        className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200"
       >
         <h2 className="text-xl font-bold text-gray-800 mb-6">Tren 6 Bulan Terakhir</h2>
         <div className="space-y-4">
@@ -430,7 +430,7 @@ export default function PetugasDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 1.3 }}
-        className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+        className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-800">Laporan Terbaru</h2>

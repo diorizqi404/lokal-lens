@@ -190,7 +190,7 @@ export default function ContributorDashboard() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Acceptance Rate</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,7 +201,7 @@ export default function ContributorDashboard() {
           <p className="text-sm text-gray-500">Artikel yang diterima</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Minggu Ini</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,7 +219,7 @@ export default function ContributorDashboard() {
           <p className="text-sm text-gray-500">Artikel dibuat</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">7 Hari Terakhir</h3>
             <svg className="w-6 h-6 text-primary-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -244,7 +244,7 @@ export default function ContributorDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+        className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200"
       >
         <h2 className="text-xl font-bold text-gray-800 mb-6">Status Artikel</h2>
         <div className="space-y-4">
@@ -361,7 +361,7 @@ export default function ContributorDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.9 }}
-          className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+          className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200"
         >
           <h2 className="text-xl font-bold text-gray-800 mb-6">Top Artikel</h2>
           <div className="space-y-3">
@@ -431,7 +431,7 @@ export default function ContributorDashboard() {
           href="/dashboard/contributor/artikel"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-gradient-to-br from-primary-green to-green-600 hover:from-primary-green/90 hover:to-green-600/90 text-white rounded-xl p-6 flex flex-col items-center gap-3 transition-all shadow-md hover:shadow-lg"
+          className="bg-gradient-to-br from-primary-green to-green-600 hover:from-primary-green/90 hover:to-green-600/90 text-white rounded-xl p-4 sm:p-6 flex flex-col items-center gap-3 transition-all shadow-md hover:shadow-lg"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="white"/>
@@ -443,7 +443,7 @@ export default function ContributorDashboard() {
           href="/dashboard/contributor/artikel"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-6 flex flex-col items-center gap-3 transition-all shadow-sm hover:shadow-md"
+          className="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-4 sm:p-6 flex flex-col items-center gap-3 transition-all shadow-sm hover:shadow-md"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z" fill="#1A1A1A"/>
@@ -455,7 +455,7 @@ export default function ContributorDashboard() {
           href="/profil"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-6 flex flex-col items-center gap-3 transition-all shadow-sm hover:shadow-md"
+          className="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-4 sm:p-6 flex flex-col items-center gap-3 transition-all shadow-sm hover:shadow-md"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#1A1A1A"/>

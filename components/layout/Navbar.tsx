@@ -231,13 +231,13 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                   href="/masuk"
                   className="px-4 py-2 text-sm font-semibold text-[#111813] bg-[#E5E7EB] rounded-full transition-colors whitespace-nowrap"
                 >
-                  Sign In
+                  Masuk
                 </a>
                 <a
                   href="/masuk"
                   className="px-5 py-2 text-sm font-semibold text-[#111813] bg-primary-green bg-[#0FD94F] rounded-full transition-colors whitespace-nowrap"
                 >
-                  Sign Up
+                  Daftar
                 </a>
               </div>
             )}
@@ -328,13 +328,13 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                   href="/masuk"
                   className="px-3 py-1.5 text-sm font-semibold text-[#111813] bg-[#E5E7EB] rounded-full transition-colors whitespace-nowrap"
                 >
-                  Sign In
+                  Masuk
                 </a>
                 <a
                   href="/masuk"
                   className="px-4 py-1.5 text-sm font-semibold text-[#111813] bg-primary-green bg-[#0FD94F] rounded-full transition-colors whitespace-nowrap"
                 >
-                  Sign Up
+                  Daftar
                 </a>
               </div>
             )}
@@ -501,13 +501,13 @@ const Navbar = ({ isHomePage = false }: NavbarProps) => {
                     href="/masuk"
                     className="flex-1 flex items-center justify-center px-4 py-3 rounded-lg bg-[#E5E7EB] border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-bold text-[#111813]">Sign In</span>
+                    <span className="text-sm font-bold text-[#111813]">Masuk</span>
                   </a>
                   <a
                     href="/masuk"
                     className="flex-1 flex items-center justify-center px-4 py-3 rounded-lg bg-primary-green bg-[#0FD94F] transition-colors"
                   >
-                    <span className="text-sm font-bold text-[#111813]">Sign Up</span>
+                    <span className="text-sm font-bold text-[#111813]">Daftar</span>
                   </a>
                 </div>
               )}
