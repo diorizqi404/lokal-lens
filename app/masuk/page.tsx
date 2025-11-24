@@ -163,8 +163,8 @@ export default function AuthPage() {
             className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: isLogin 
-                ? "url('https://images.unsplash.com/photo-1555400038-63f5ba517a47?q=80&w=2070&auto=format&fit=crop')"
-                : "url('https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=2064&auto=format&fit=crop')",
+                ? "url('/assets/img/auth/masuk.png')"
+                : "url('/assets/img/auth/daftar.png')",
             }}
           />
           <div 
