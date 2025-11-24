@@ -108,20 +108,32 @@ export async function PUT(
       }
     }
     
+    // Build update payload dynamically. Prisma model uses `category_rel`
+    // relation rather than a scalar `category_id`, so connect/disconnect
+    // the relation when a category is provided.
+    const updatePayload: any = {};
+    if (title !== undefined) updatePayload.title = title;
+    if (slug !== undefined) updatePayload.slug = slug;
+    if (excerpt !== undefined) updatePayload.excerpt = excerpt;
+    if (content !== undefined) updatePayload.content = content;
+    if (featured_image !== undefined) updatePayload.featured_image = featured_image;
+    if (tags !== undefined) updatePayload.tags = tags;
+    if (province !== undefined) updatePayload.province = province;
+    if (read_time !== undefined) updatePayload.read_time = read_time;
+    if (is_highlight !== undefined) updatePayload.is_highlight = is_highlight;
+
+    // Handle category relation: connect if provided, disconnect if null/empty string
+    if (typeof category_id !== 'undefined') {
+      if (category_id === null || category_id === '' || category_id === 0) {
+        updatePayload.category_rel = { disconnect: true };
+      } else {
+        updatePayload.category_rel = { connect: { id: Number(category_id) } };
+      }
+    }
+
     const article = await prisma.article.update({
       where: { id: parseInt(params.id) },
-      data: {
-        title,
-        slug,
-        excerpt,
-        content,
-        featured_image,
-        category_id,
-        tags,
-        province,
-        read_time,
-        is_highlight
-      },
+      data: updatePayload,
       include: {
         author: {
           select: {
