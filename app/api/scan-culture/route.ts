@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "@/lib/prisma";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { appendFile } from "fs/promises";
 import { put } from "@vercel/blob";
+import { config, getJson } from "serpapi";
 
 // Helper function to extract object type from name
 function extractObjectType(name: string): string {
@@ -79,6 +77,35 @@ async function uploadToVercelBlob(base64Image: string, fileName: string): Promis
 
   return url; // langsung URL publik
 }
+
+async function fetchGoogleImages(query: string): Promise<string[]> {
+  try {
+    config.api_key = process.env.SERPAPI_KEY || "";
+
+    const result = await getJson({
+      engine: "google_images",
+      q: query,
+      hl: "id",
+      gl: "id",
+      safe: "active",
+      num: 5
+    });
+
+    if (!result.images_results) return [];
+
+    // Ambil gambar resolusi asli atau thumbnail
+    return result.images_results.map((img: any) => img.original || img.thumbnail);
+  } catch (error) {
+    console.error("SerpAPI Image Search Error:", error);
+    return [];
+  }
+}
+
+function generateMapEmbedUrl(place: string): string {
+  const query = encodeURIComponent(place);
+  return `https://www.google.com/maps?q=${query}&output=embed`;
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -374,19 +401,20 @@ PENTING:
           });
           cultureId = newCulture.id;
 
-          // Simpan gambar referensi dari internet ke culture_images
-          if (scanResult.image && scanResult.image !== "") {
-            try {
+          const referenceImages = await fetchGoogleImages(
+            `${scanResult.name} budaya indonesia`
+          );
+
+          if (referenceImages.length > 0) {
+            for (const imageUrl of referenceImages) {
               await prisma.cultureImage.create({
                 data: {
-                  culture_id: cultureId,
-                  image_url: scanResult.image,
+                  culture_id: cultureId!,
+                  image_url: imageUrl,
                   alt_text: `Referensi ${scanResult.name}`,
                   is_primary: false,
-                }
+                },
               });
-            } catch (imageError) {
-              console.error(`❌ Failed to save reference image: ${imageError}`);
             }
           }
         } else {
