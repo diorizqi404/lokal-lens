@@ -139,7 +139,7 @@ const navigation: NavItem[] = [
         href: '/dashboard/admin/event',
         icon: (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" fill="currentColor"/>
+            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 1.99 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" fill="currentColor"/>
           </svg>
         ),
       },
@@ -418,103 +418,118 @@ export default function DashboardSidebar({ isOpen = false, onClose }: Props) {
       {/* Mobile overlay sidebar */}
       <div className={`md:hidden fixed inset-0 z-50 transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <aside className="relative w-64 h-full bg-[#1A1A1A] text-white">
-          <div className="flex h-16 items-center gap-3 px-4 border-b border-gray-800">
-            <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center">
-              <Image src="/assets/img/logo-white.png" alt="LokalLens Logo" width={28} height={28} />
+        <aside className="relative w-64 h-full bg-[#1A1A1A] text-white flex flex-col justify-between">
+          <div>
+            <div className="flex h-16 items-center gap-3 px-4 border-b border-gray-800">
+              <div className="w-8 h-8 rounded-lg bg-primary-green flex items-center justify-center">
+                <Image src="/assets/img/logo-white.png" alt="LokalLens Logo" width={28} height={28} />
+              </div>
+              <span className="text-lg font-bold">LokalLens</span>
+              <button type="button" onClick={onClose} className="ml-auto p-2 text-gray-300 hover:text-white">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             </div>
-            <span className="text-lg font-bold">LokalLens</span>
-            <button type="button" onClick={onClose} className="ml-auto p-2 text-gray-300 hover:text-white">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
 
-          <nav className="px-3 py-4 overflow-y-auto h-[calc(100%-64px)]">
-            <ul className="space-y-1">
-              {filteredNavigation.map((item) => {
-                const hasSubMenu = item.subMenu && item.subMenu.length > 0;
-                const isActive = item.href ? (pathname === item.href || pathname.startsWith(item.href + '/')) : false;
-                const isSubActive = isSubmenuActive(item.subMenu);
-                const isOpen = openSubMenu === item.name;
+            <nav className="px-3 py-4 overflow-y-auto">
+              <ul className="space-y-1">
+                {filteredNavigation.map((item) => {
+                  const hasSubMenu = item.subMenu && item.subMenu.length > 0;
+                  const isActive = item.href ? (pathname === item.href || pathname.startsWith(item.href + '/')) : false;
+                  const isSubActive = isSubmenuActive(item.subMenu);
+                  const isOpen = openSubMenu === item.name;
 
-                return (
-                  <li key={item.name}>
-                    {hasSubMenu ? (
-                      <>
-                        <button
-                          onClick={() => toggleSubMenu(item.name)}
-                          className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                            isSubActive || isOpen
-                              ? 'bg-gray-800 text-white'
+                  return (
+                    <li key={item.name}>
+                      {hasSubMenu ? (
+                        <>
+                          <button
+                            onClick={() => toggleSubMenu(item.name)}
+                            className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                              isSubActive || isOpen
+                                ? 'bg-gray-800 text-white'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={isSubActive || isOpen ? 'text-primary-green' : 'text-gray-400'}>
+                                {item.icon}
+                              </span>
+                              <span>{item.name}</span>
+                            </div>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                              className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                            >
+                              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+
+                          {isOpen && (
+                            <ul className="mt-1 ml-6 space-y-1 border-l border-gray-700 pl-3">
+                              {item.subMenu?.map((subItem) => {
+                                const isSubItemActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/');
+                                return (
+                                  <li key={subItem.name}>
+                                    <Link
+                                      href={subItem.href}
+                                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        isSubItemActive
+                                          ? 'bg-primary-green text-white'
+                                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                      }`}
+                                    >
+                                      <span className={isSubItemActive ? 'text-white' : 'text-gray-400'}>
+                                        {subItem.icon}
+                                      </span>
+                                      {subItem.name}
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </>
+                      ) : (
+                        <Link
+                          href={item.href || '#'}
+                          onClick={onClose}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-primary-green text-white'
                               : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <span className={isSubActive || isOpen ? 'text-primary-green' : 'text-gray-400'}>
-                              {item.icon}
-                            </span>
-                            <span>{item.name}</span>
-                          </div>
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                          >
-                            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
+                          <span className={isActive ? 'text-white' : 'text-gray-400'}>
+                            {item.icon}
+                          </span>
+                          {item.name}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
 
-                        {isOpen && (
-                          <ul className="mt-1 ml-6 space-y-1 border-l border-gray-700 pl-3">
-                            {item.subMenu?.map((subItem) => {
-                              const isSubItemActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/');
-                              return (
-                                <li key={subItem.name}>
-                                  <Link
-                                    href={subItem.href}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                      isSubItemActive
-                                        ? 'bg-primary-green text-white'
-                                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                    }`}
-                                  >
-                                    <span className={isSubItemActive ? 'text-white' : 'text-gray-400'}>
-                                      {subItem.icon}
-                                    </span>
-                                    {subItem.name}
-                                  </Link>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </>
-                    ) : (
-                      <Link
-                        href={item.href || '#'}
-                        onClick={onClose}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-primary-green text-white'
-                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                        }`}
-                      >
-                        <span className={isActive ? 'text-white' : 'text-gray-400'}>
-                          {item.icon}
-                        </span>
-                        {item.name}
-                      </Link>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          {/* Logout Button */}
+          <div className="px-3 py-4 border-t border-gray-800">
+            <button
+              onClick={logout}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="currentColor"/>
+              </svg>
+              Keluar
+            </button>
+          </div>
         </aside>
       </div>
     </>
