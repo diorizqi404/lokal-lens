@@ -93,8 +93,11 @@ async function fetchGoogleImages(query: string): Promise<string[]> {
 
     if (!result.images_results) return [];
 
-    // Ambil gambar resolusi asli atau thumbnail
-    return result.images_results.map((img: any) => img.original || img.thumbnail);
+    const images = result.images_results.map(
+      (img: any) => img.original || img.thumbnail
+    );
+
+    return images.slice(0, 5);
   } catch (error) {
     console.error("SerpAPI Image Search Error:", error);
     return [];
@@ -378,6 +381,10 @@ PENTING:
           }
         });
 
+        const referenceImages = await fetchGoogleImages(
+            `${scanResult.name} budaya indonesia`
+          );
+
         let cultureId = existingCulture?.id;
         if (!existingCulture) {
           const newCulture = await prisma.culture.create({
@@ -396,15 +403,11 @@ PENTING:
               longitude: scanResult.longitude || null,
               status: 'published',
               is_endangered: scanResult.rarity === "Sangat Langka",
-              thumbnail: savedImagePath,
+              thumbnail: referenceImages[0] || savedImagePath || null,
               map_embed_url: generateMapEmbedUrl(scanResult.location || "Indonesia"),
             }
           });
           cultureId = newCulture.id;
-
-          const referenceImages = await fetchGoogleImages(
-            `${scanResult.name} budaya indonesia`
-          );
 
           if (referenceImages.length > 0) {
             for (const imageUrl of referenceImages) {
