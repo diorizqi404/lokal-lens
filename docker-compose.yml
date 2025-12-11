@@ -22,9 +22,10 @@ services:
       - lokallens-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--port=9906", "-u", "root", "-prootpassword"]
-      timeout: 20s
-      retries: 10
-      interval: 5s
+      timeout: 30s
+      retries: 20
+      interval: 10s
+      start_period: 60s
 
   app:
     build:
