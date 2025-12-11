@@ -5,9 +5,11 @@ import { useState, useRef, useEffect } from "react";
 
 interface ScannerSectionProps {
   onScanComplete?: (result: any) => void;
+  autoPlayAudio?: boolean;
+  onAutoPlayChange?: (value: boolean) => void;
 }
 
-export default function ScannerSection({ onScanComplete }: ScannerSectionProps) {
+export default function ScannerSection({ onScanComplete, autoPlayAudio = true, onAutoPlayChange }: ScannerSectionProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -134,6 +136,37 @@ export default function ScannerSection({ onScanComplete }: ScannerSectionProps) 
 
   return (
     <>
+    {/* Auto-play Toggle */}
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex items-center justify-between p-4 bg-white rounded-xl border border-[#F0F4F4] shadow-sm mb-4"
+    >
+      <div className="flex items-center gap-3">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#111818]">
+          <path d="M10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18ZM7.5 6.5L13.5 10L7.5 13.5V6.5Z" fill="currentColor"/>
+        </svg>
+        <div>
+          <p className="text-sm font-bold text-[#111818]">Putar Audio Otomatis</p>
+          <p className="text-xs text-[#618989]">Aktifkan untuk mendengar deskripsi setelah scan</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => onAutoPlayChange?.(!autoPlayAudio)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#13ECEC] focus:ring-offset-2 ${
+          autoPlayAudio ? 'bg-[#13ECEC]' : 'bg-gray-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ${
+            autoPlayAudio ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </motion.div>
+
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}

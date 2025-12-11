@@ -12,7 +12,6 @@ export default function AboutPage() {
       <HeroSection />
       <ValuesSection />
       <ChallengeAndSolutionSection />
-      <TeamSection />
       <CTASection />
     </main>
   );

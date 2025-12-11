@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
 export async function POST(request: Request) {
   try {
@@ -35,15 +36,25 @@ export async function POST(request: Request) {
     const ext = file.name.split(".").pop();
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    // Upload to Vercel Blob (instead of writing to disk)
-    const blob = await put(filename, file, {
-      access: "public",
-    });
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Create uploads directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
+
+    // Save file to public/uploads
+    const filePath = path.join(uploadDir, filename);
+    await writeFile(filePath, buffer);
+
+    // Return URL path
+    const url = `/uploads/${filename}`;
 
     return NextResponse.json({
       success: true,
-      url: blob.url,        // <- URL yang bisa dipakai di frontend
-      pathname: blob.pathname,
+      url: url,
+      pathname: filename,
       type: file.type,
       size: file.size,
     });
@@ -51,7 +62,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to upload file" + error },
+      { success: false, error: "Failed to upload file: " + error },
       { status: 500 }
     );
   }

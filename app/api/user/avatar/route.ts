@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/utils';
 import { prisma } from '@/lib/prisma';
-import { put } from '@vercel/blob';
+import { writeFile, mkdir, unlink } from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,12 +50,34 @@ export async function POST(request: NextRequest) {
     const ext = file.name.split('.').pop();
     const filename = `avatar_${decoded.userId}_${Date.now()}.${ext}`;
 
-    // Upload to Vercel Blob instead of local filesystem
-    const blob = await put(`avatars/${filename}`, file, {
-      access: 'public',
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Create avatars directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+    await mkdir(uploadDir, { recursive: true });
+
+    // Delete old avatar if exists
+    const oldProfile = await prisma.profile.findUnique({
+      where: { user_id: decoded.userId },
+      select: { avatar: true }
     });
 
-    const avatarUrl = blob.url;
+    if (oldProfile?.avatar && oldProfile.avatar.startsWith('/uploads/')) {
+      try {
+        const oldFilePath = path.join(process.cwd(), 'public', oldProfile.avatar);
+        await unlink(oldFilePath);
+      } catch (error) {
+        console.log('Could not delete old avatar:', error);
+      }
+    }
+
+    // Save file to public/uploads/avatars
+    const filePath = path.join(uploadDir, filename);
+    await writeFile(filePath, buffer);
+
+    const avatarUrl = `/uploads/avatars/${filename}`;
 
     // Update user profile in DB
     await prisma.profile.upsert({
@@ -95,6 +118,22 @@ export async function DELETE(request: NextRequest) {
 
     if (!decoded) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Get current avatar
+    const profile = await prisma.profile.findUnique({
+      where: { user_id: decoded.userId },
+      select: { avatar: true }
+    });
+
+    // Delete avatar file if exists
+    if (profile?.avatar && profile.avatar.startsWith('/uploads/')) {
+      try {
+        const filePath = path.join(process.cwd(), 'public', profile.avatar);
+        await unlink(filePath);
+      } catch (error) {
+        console.log('Could not delete avatar file:', error);
+      }
     }
 
     // Remove avatar URL from DB

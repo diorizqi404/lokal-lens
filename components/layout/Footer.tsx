@@ -67,7 +67,7 @@ const Footer = () => {
                 Ikuti Kami
               </h3>
               <div className="flex flex-col gap-2">
-                <a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/lokallens_id/" className="text-sm font-normal leading-5 text-[#A19886] hover:text-[#F8F7F5] transition-colors">
+                <a href="#" className="text-sm font-normal leading-5 text-[#A19886] hover:text-[#F8F7F5] transition-colors">
                   Instagram
                 </a>
                 <a href="#" className="text-sm font-normal leading-5 text-[#A19886] hover:text-[#F8F7F5] transition-colors">

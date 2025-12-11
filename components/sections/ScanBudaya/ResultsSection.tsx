@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 
 interface ResultData {
   name: string;
@@ -18,9 +19,106 @@ interface ResultData {
 interface ResultsSectionProps {
   data?: ResultData;
   isLoading?: boolean;
+  autoPlayAudio?: boolean;
 }
 
-const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
+const ResultsSection = ({ data, isLoading, autoPlayAudio = true }: ResultsSectionProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [isComponentReady, setIsComponentReady] = useState(false);
+  const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const hasAutoPlayedRef = useRef<string>('');
+
+  // Check if speech synthesis is supported
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      setIsSpeechSupported(true);
+      speechSynthesisRef.current = window.speechSynthesis;
+    }
+  }, []);
+
+  // Mark component as ready after mount
+  useEffect(() => {
+    setIsComponentReady(true);
+  }, []);
+
+  // Auto-play audio when data changes and component is ready
+  useEffect(() => {
+    if (
+      data && 
+      !isLoading && 
+      isComponentReady && 
+      isSpeechSupported && 
+      !isNotRecognized(data) &&
+      autoPlayAudio && // Check if auto-play is enabled
+      hasAutoPlayedRef.current !== data.name // Prevent playing same result multiple times
+    ) {
+      hasAutoPlayedRef.current = data.name;
+      
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          handlePlayAudio();
+        });
+      });
+    }
+  }, [data, isLoading, isComponentReady, isSpeechSupported, autoPlayAudio]);
+
+  // Cleanup speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (speechSynthesisRef.current) {
+        speechSynthesisRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const handlePlayAudio = () => {
+    if (!isSpeechSupported || !speechSynthesisRef.current || !data) return;
+
+    try {
+      // Stop any ongoing speech
+      speechSynthesisRef.current.cancel();
+
+      // Create speech text
+      const textToSpeak = `${data.name}. Berasal dari ${data.location}. Tingkat akurasi ${data.accuracy}. ${data.description}. Tingkat kelangkaan: ${data.rarity}. Status UNESCO: ${data.unesco}.`;
+
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      // Event handlers
+      utterance.onstart = () => {
+        setIsPlaying(true);
+      };
+
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
+
+      utterance.onerror = (event) => {
+        setIsPlaying(false);
+        console.warn('Speech synthesis tidak tersedia atau terjadi error:', event);
+      };
+
+      utteranceRef.current = utterance;
+      speechSynthesisRef.current.speak(utterance);
+    } catch (error) {
+      console.warn('Gagal memutar audio:', error);
+      setIsPlaying(false);
+    }
+  };
+
+  const handleStopAudio = () => {
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.cancel();
+      setIsPlaying(false);
+    }
+  };
   // Check if object is not recognized
   const isNotRecognized = (data: ResultData | undefined) => {
     if (!data) return false;
@@ -225,9 +323,37 @@ const ResultsSection = ({ data, isLoading }: ResultsSectionProps) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
-            <h3 className="text-sm sm:text-base font-bold leading-6 text-[#111818]">
-              Deskripsi
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm sm:text-base font-bold leading-6 text-[#111818]">
+                Deskripsi
+              </h3>
+              {isSpeechSupported && !isNotRecognized(data) && (
+                <motion.button
+                  onClick={isPlaying ? handleStopAudio : handlePlayAudio}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#13ECEC] hover:bg-[#10D4D4] transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={isPlaying ? "Hentikan Audio" : "Putar Audio Deskripsi"}
+                >
+                  {isPlaying ? (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="2" width="4" height="12" rx="1" fill="white"/>
+                        <rect x="9" y="2" width="4" height="12" rx="1" fill="white"/>
+                      </svg>
+                      <span className="text-xs font-semibold text-white">Hentikan</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 2.5L12 8L4 13.5V2.5Z" fill="white"/>
+                      </svg>
+                      <span className="text-xs font-semibold text-white">Dengarkan</span>
+                    </>
+                  )}
+                </motion.button>
+              )}
+            </div>
             <p className="text-xs sm:text-sm font-normal leading-relaxed text-[#618989]">
               {displayData.description}
             </p>

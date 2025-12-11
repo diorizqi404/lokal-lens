@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 import { randomBytes } from "crypto";
 
 export async function POST(request: Request) {
@@ -43,16 +44,26 @@ export async function POST(request: Request) {
     const ext = file.name.split(".").pop();
     const filename = `${randomBytes(16).toString("hex")}.${ext}`;
 
-    // Upload file to Vercel Blob (instead of writing to disk)
-    const blob = await put(`reports/${filename}`, file, {
-      access: "public", // URL langsung bisa dipakai
-    });
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Create reports directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "reports");
+    await mkdir(uploadDir, { recursive: true });
+
+    // Save file to public/uploads/reports
+    const filePath = path.join(uploadDir, filename);
+    await writeFile(filePath, buffer);
+
+    // Return URL path
+    const fileUrl = `/uploads/reports/${filename}`;
 
     return NextResponse.json({
       success: true,
       message: "File uploaded successfully",
-      fileUrl: blob.url, // URL public
-      pathname: blob.pathname,
+      fileUrl: fileUrl,
+      pathname: filename,
       size: file.size,
       type: file.type,
     });

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "@/lib/prisma";
-import { put } from "@vercel/blob";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 import { config, getJson } from "serpapi";
 
 // Helper function to extract object type from name
@@ -63,19 +64,22 @@ function getCategoryFromObjectType(objectType: string): string | undefined {
 }
 
 // Helper function to save image to disk
-async function uploadToVercelBlob(base64Image: string, fileName: string): Promise<string> {
+async function saveImageToLocal(base64Image: string, fileName: string): Promise<string> {
   const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
   const buffer = Buffer.from(base64Data, "base64");
 
   const timestamp = Date.now();
   const uniqueName = `${fileName}-${timestamp}.jpg`;
 
-  const { url } = await put(`scans/${uniqueName}`, buffer, {
-    access: "public",
-    contentType: "image/jpeg",
-  });
+  // Create scans directory if it doesn't exist
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "scans");
+  await mkdir(uploadDir, { recursive: true });
 
-  return url; // langsung URL publik
+  // Save file to public/uploads/scans
+  const filePath = path.join(uploadDir, uniqueName);
+  await writeFile(filePath, buffer);
+
+  return `/uploads/scans/${uniqueName}`; // Return URL path
 }
 
 async function fetchGoogleImages(query: string): Promise<string[]> {
@@ -206,7 +210,7 @@ PENTING:
 - "category_slug" WAJIB diisi dengan slug kategori yang sesuai dari daftar kategori yang tersedia`;
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: [
         {
           role: "user",
@@ -346,7 +350,7 @@ PENTING:
           .replace(/\s+/g, '-')
           .substring(0, 50);
         
-        savedImagePath = await uploadToVercelBlob(image, sanitizedName);
+        savedImagePath = await saveImageToLocal(image, sanitizedName);
       } catch (imageError) {
         console.error(`❌ Failed to save image: ${imageError}`);
       }

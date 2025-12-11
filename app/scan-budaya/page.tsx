@@ -16,6 +16,7 @@ export default function ScanBudayaPage() {
   const [scanState, setScanState] = useState<'BEFORE_SCAN' | 'SCANNING' | 'AFTER_SCAN'>('BEFORE_SCAN');
   const [scanResult, setScanResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
 
   const handleScanComplete = (result: any) => {
     setScanResult(result);
@@ -49,7 +50,11 @@ export default function ScanBudayaPage() {
               className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24"
             >
               <div className="space-y-8">
-                <ScannerSection onScanComplete={handleScanComplete} />
+                <ScannerSection 
+                  onScanComplete={handleScanComplete} 
+                  autoPlayAudio={autoPlayAudio}
+                  onAutoPlayChange={setAutoPlayAudio}
+                />
                 <TipsSection />
               </div>
               <div className="space-y-8">
@@ -119,7 +124,7 @@ export default function ScanBudayaPage() {
               <div className="lg:hidden grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24">
               <div className="space-y-8">
                 {/* <ScannerSection onScanComplete={handleScanComplete} /> */}
-                <ResultsSection data={scanResult} isLoading={isLoading} />
+                <ResultsSection data={scanResult} isLoading={isLoading} autoPlayAudio={autoPlayAudio} />
                 <TipsSection />
                 <RecommendationsSection scanResult={scanResult} />
               </div>
@@ -132,7 +137,7 @@ export default function ScanBudayaPage() {
               <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 pb-16 lg:pb-24">
               <div className="space-y-8">
                 {/* <ScannerSection onScanComplete={handleScanComplete} /> */}
-                <ResultsSection data={scanResult} isLoading={isLoading} />
+                <ResultsSection data={scanResult} isLoading={isLoading} autoPlayAudio={autoPlayAudio} />
                 <TipsSection />
               </div>
               <div className="space-y-8">
