@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     container_name: lokallens-mysql
     restart: unless-stopped
-    command: --port=9906
+    command: --port=9906 --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: lokal-lens
@@ -16,13 +16,15 @@ services:
       - "9906:9906"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./lokallen_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./lokallen_db.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./init-db.sh:/docker-entrypoint-initdb.d/02-init.sh
     networks:
       - lokallens-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--port=9906"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--port=9906", "-u", "root", "-prootpassword"]
       timeout: 20s
       retries: 10
+      interval: 5s
 
   app:
     build:
