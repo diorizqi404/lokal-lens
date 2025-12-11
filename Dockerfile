@@ -2,25 +2,41 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# Install OpenSSL 1.1 compatibility for Prisma
+RUN apk add --no-cache openssl1.1-compat libc6-compat
+
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with optimizations
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Install OpenSSL 1.1 compatibility for Prisma
+RUN apk add --no-cache openssl1.1-compat libc6-compat
+
+# Copy package files for dev dependencies
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install ALL dependencies (including dev) for build
+RUN npm ci --ignore-scripts && \
+    npm cache clean --force
+
+# Copy source code
 COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build Next.js application
+# Build Next.js application with optimizations
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Runner
@@ -29,6 +45,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install OpenSSL 1.1 compatibility for Prisma
+RUN apk add --no-cache openssl1.1-compat libc6-compat
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

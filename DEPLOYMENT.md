@@ -21,7 +21,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # Install Docker Compose
-sudo apt install docker-compose -y
+sudo apt install docker compose -y
 
 # Add user to docker group (optional)
 sudo usermod -aG docker $USER
@@ -59,18 +59,36 @@ Pastikan file `lokallen_db.sql` ada di root project:
 ls -la lokallen_db.sql
 ```
 
-### 5. Build dan Run
+### 5. Build dan Run (OPTIMIZED!)
+
+**PENTING**: Enable BuildKit untuk build 2-3x lebih cepat!
 
 ```bash
-# Build dan start containers
-docker-compose up -d --build
+# Enable BuildKit (WAJIB untuk build cepat!)
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
+# Atau gunakan Makefile (recommended)
+make build
+make up
+
+# Atau manual
+docker compose build
+docker compose up -d
 
 # Lihat logs
-docker-compose logs -f
+docker compose logs -f
 
 # Cek status
-docker-compose ps
+docker compose ps
 ```
+
+**Estimasi Waktu Build**:
+- First build dengan BuildKit: 8-12 menit
+- Rebuild (minor changes): 2-4 menit
+- Rebuild (no changes): 30-60 detik
+
+Tanpa BuildKit bisa 15-20 menit! Lihat `BUILD-OPTIMIZATION.md` untuk detail.
 
 ### 6. Verifikasi Database
 
@@ -87,28 +105,28 @@ exit;
 
 ### Stop Containers
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Restart Containers
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### View Logs
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f app
-docker-compose logs -f mysql
+docker compose logs -f app
+docker compose logs -f mysql
 ```
 
 ### Rebuild After Code Changes
 ```bash
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 ```
 
 ### Backup Database
@@ -174,16 +192,16 @@ sudo certbot --nginx -d your-domain.com
 ### Container tidak start
 ```bash
 # Cek logs
-docker-compose logs
+docker compose logs
 
 # Cek status
-docker-compose ps
+docker compose ps
 ```
 
 ### Database connection error
 ```bash
 # Pastikan MySQL sudah ready
-docker-compose logs mysql
+docker compose logs mysql
 
 # Test connection
 docker exec -it lokallens-mysql mysql -u lokallens -plokallens123 -e "SELECT 1"
@@ -195,19 +213,19 @@ docker exec -it lokallens-mysql mysql -u lokallens -plokallens123 -e "SELECT 1"
 sudo netstat -tulpn | grep :3000
 sudo netstat -tulpn | grep :3306
 
-# Ubah port di docker-compose.yml jika perlu
+# Ubah port di docker compose.yml jika perlu
 ```
 
 ### Rebuild dari awal
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 ```
 
 ## Security Notes
 
 1. **Ganti JWT_SECRET** di production dengan nilai yang kuat
-2. **Ganti MySQL password** di docker-compose.yml
+2. **Ganti MySQL password** di docker compose.yml
 3. **Jangan expose port MySQL** ke public (hapus `ports` di service mysql jika tidak perlu akses eksternal)
 4. **Gunakan firewall** untuk membatasi akses
 5. **Setup SSL** dengan Certbot untuk HTTPS
@@ -238,14 +256,14 @@ docker system prune -a
 git pull
 
 # Rebuild and restart
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 ```
 
 ## Support
 
 Jika ada masalah, cek:
-1. Logs: `docker-compose logs -f`
-2. Container status: `docker-compose ps`
+1. Logs: `docker compose logs -f`
+2. Container status: `docker compose ps`
 3. Network: `docker network ls`
 4. Volumes: `docker volume ls`
