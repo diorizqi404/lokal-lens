@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lokallens-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lokal-lens
+      MYSQL_USER: lokallens
+      MYSQL_PASSWORD: lokallens123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./lokallen_db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - lokallens-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lokallens-app
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://lokallens:lokallens123@mysql:3306/lokal-lens
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production-12345
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
+      - SERPAPI_KEY=${SERPAPI_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - lokallens-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  lokallens-network:
+    driver: bridge
