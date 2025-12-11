@@ -5,11 +5,13 @@ services:
     image: mysql:8.0
     container_name: lokallens-mysql
     restart: unless-stopped
+    command: --port=9906
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: lokal-lens
       MYSQL_USER: lokallens
       MYSQL_PASSWORD: lokallens123
+      MYSQL_TCP_PORT: 9906
     ports:
       - "9906:9906"
     volumes:
@@ -18,7 +20,7 @@ services:
     networks:
       - lokallens-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--port=9906"]
       timeout: 20s
       retries: 10
 
